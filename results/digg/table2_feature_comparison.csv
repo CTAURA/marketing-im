@@ -1,0 +1,6 @@
+method,community_based,topic_aware,influence_computation_model,reference
+Greedy,no,no,Monte-Carlo Independent Cascade,Kempe et al. [3]
+CINEMA,yes,no,Monte-Carlo IC (conformity-aware),Li et al. [24]
+AIR+CGA,yes,yes,MixedGreedy (Monte-Carlo IC),Barbieri et al. [35] + CGA [22]
+CTIM_CGA,yes,yes,MixedGreedy (Monte-Carlo IC),this paper + CGA [22]
+CTIM,yes,yes,"MIA, exact Eq (17)/(18)",this paper

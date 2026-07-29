@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="560" height="380" viewBox="0 0 560 380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img">
+<title>Fig 2b - running time vs K (log scale)</title>
+<defs><clipPath id="plotclip"><rect x="59.08" y="32" width="484.92" height="304.5"/></clipPath></defs>
+<rect x="0" y="0" width="560" height="380" fill="#ffffff"/>
+<text x="59.08" y="22" font-size="14" font-weight="600" fill="#202124">Fig 2b - running time vs K (log scale)</text>
+<rect x="59.08" y="32" width="484.92" height="304.5" fill="#ffffff" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M59.08 305.95 H544 M59.08 288.07 H544 M59.08 275.39 H544 M59.08 265.55 H544 M59.08 257.52 H544 M59.08 250.72 H544 M59.08 244.84 H544 M59.08 239.64 H544 M59.08 204.45 H544 M59.08 186.57 H544 M59.08 173.89 H544 M59.08 164.05 H544 M59.08 156.02 H544 M59.08 149.22 H544 M59.08 143.34 H544 M59.08 138.14 H544 M59.08 102.95 H544 M59.08 85.07 H544 M59.08 72.39 H544 M59.08 62.55 H544 M59.08 54.52 H544 M59.08 47.72 H544 M59.08 41.84 H544 M59.08 36.64 H544" stroke="#eef0f2" stroke-width="1" fill="none"/>
+<path d="M59.08 336.5 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 336.5 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="340" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">-2</tspan></text>
+<path d="M59.08 235 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 235 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="238.5" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">-1</tspan></text>
+<path d="M59.08 133.5 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 133.5 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="137" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">0</tspan></text>
+<path d="M59.08 32 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 32 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="35.5" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">1</tspan></text>
+<path d="M77.04 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M77.04 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="77.04" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">1</text>
+<path d="M166.84 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M166.84 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="166.84" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">11</text>
+<path d="M256.64 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M256.64 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="256.64" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">21</text>
+<path d="M526.04 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M526.04 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="526.04" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">51</text>
+<path d="M59.08 32 V336.5 H544" stroke="#5f6368" stroke-width="1.2" fill="none"/>
+<text x="301.54" y="372" font-size="11.5" fill="#202124" text-anchor="middle">seed set size K</text>
+<text x="21.2" y="184.25" font-size="11.5" fill="#202124" text-anchor="middle" transform="rotate(-90 21.2 184.25)">running time (s)</text>
+<g clip-path="url(#plotclip)">
+<path d="M77.04 210.15 L166.84 210.05 L256.64 209.97 L526.04 209.75" fill="none" stroke="#1f5fd0" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="77.04" cy="210.15" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="166.84" cy="210.05" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="256.64" cy="209.97" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="526.04" cy="209.75" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<path d="M77.04 207.1 L166.84 207.02 L256.64 206.56 L526.04 205.63" fill="none" stroke="#e8830c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="73.98" y="204.04" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="163.78" y="203.96" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="253.58" y="203.5" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="522.98" y="202.57" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<path d="M77.04 224.86 L166.84 221.72 L256.64 219.39 L526.04 214.25" fill="none" stroke="#2e9e4f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="77.04,220.27 81.63,224.86 77.04,229.45 72.45,224.86" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<polygon points="166.84,217.13 171.43,221.72 166.84,226.31 162.25,221.72" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<polygon points="256.64,214.8 261.23,219.39 256.64,223.98 252.05,219.39" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<polygon points="526.04,209.66 530.63,214.25 526.04,218.84 521.45,214.25" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<path d="M77.04 257.22 L166.84 205.02 L256.64 198.36 L526.04 190.98" fill="none" stroke="#8a8f98" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="77.04,252.63 81.63,261.12 72.45,261.12" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<polygon points="166.84,200.43 171.43,208.92 162.25,208.92" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<polygon points="256.64,193.77 261.23,202.26 252.05,202.26" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<polygon points="526.04,186.39 530.63,194.88 521.45,194.88" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<path d="M77.04 224.62 L166.84 169.76 L256.64 147.12 L526.04 126.39" fill="none" stroke="#e0b013" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M73.13 220.71 L80.95 228.53 M73.13 228.53 L80.95 220.71" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<path d="M162.93 165.85 L170.75 173.67 M162.93 173.67 L170.75 165.85" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<path d="M252.73 143.21 L260.55 151.03 M252.73 151.03 L260.55 143.21" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<path d="M522.13 122.48 L529.95 130.3 M522.13 130.3 L529.95 122.48" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+</g>
+<g>
+<rect x="438.62" y="240" width="97.38" height="88.5" rx="4" fill="#ffffff" fill-opacity="0.92" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M445.62 253.25 H465.62" stroke="#1f5fd0" stroke-width="2" stroke-linecap="round"/>
+<circle cx="455.62" cy="253.25" r="3" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="256.93" font-size="10.5" fill="#202124">CTIM</text>
+<path d="M445.62 268.75 H465.62" stroke="#e8830c" stroke-width="2" stroke-linecap="round"/>
+<rect x="452.92" y="266.05" width="5.4" height="5.4" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="272.43" font-size="10.5" fill="#202124">CTIM_CGA</text>
+<path d="M445.62 284.25 H465.62" stroke="#2e9e4f" stroke-width="2" stroke-linecap="round"/>
+<polygon points="455.62,280.2 459.67,284.25 455.62,288.3 451.57,284.25" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="287.93" font-size="10.5" fill="#202124">AIR+CGA</text>
+<path d="M445.62 299.75 H465.62" stroke="#8a8f98" stroke-width="2" stroke-linecap="round"/>
+<polygon points="455.62,295.7 459.67,303.19 451.57,303.19" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="303.43" font-size="10.5" fill="#202124">CINEMA</text>
+<path d="M445.62 315.25 H465.62" stroke="#e0b013" stroke-width="2" stroke-linecap="round"/>
+<path d="M452.17 311.8 L459.07 318.7 M452.17 318.7 L459.07 311.8" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<text x="470.62" y="318.93" font-size="10.5" fill="#202124">Greedy</text>
+</g>
+</svg>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="560" height="380" viewBox="0 0 560 380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img">
+<title>Fig 5 - impact of C on CTIM (K=20, Z=8) - spread</title>
+<defs><clipPath id="plotclip"><rect x="62.7" y="32" width="481.3" height="304.5"/></clipPath></defs>
+<rect x="0" y="0" width="560" height="380" fill="#ffffff"/>
+<text x="62.7" y="22" font-size="14" font-weight="600" fill="#202124">Fig 5 - impact of C on CTIM (K=20, Z=8) - spread</text>
+<rect x="62.7" y="32" width="481.3" height="304.5" fill="#ffffff" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M62.7 336.5 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M58.7 336.5 H62.7" stroke="#5f6368" stroke-width="1"/>
+<text x="55.7" y="340" font-size="10" fill="#70757a" text-anchor="end">0</text>
+<path d="M62.7 270.42 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M58.7 270.42 H62.7" stroke="#5f6368" stroke-width="1"/>
+<text x="55.7" y="273.92" font-size="10" fill="#70757a" text-anchor="end">1000</text>
+<path d="M62.7 204.34 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M58.7 204.34 H62.7" stroke="#5f6368" stroke-width="1"/>
+<text x="55.7" y="207.84" font-size="10" fill="#70757a" text-anchor="end">2000</text>
+<path d="M62.7 138.26 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M58.7 138.26 H62.7" stroke="#5f6368" stroke-width="1"/>
+<text x="55.7" y="141.76" font-size="10" fill="#70757a" text-anchor="end">3000</text>
+<path d="M62.7 72.18 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M58.7 72.18 H62.7" stroke="#5f6368" stroke-width="1"/>
+<text x="55.7" y="75.68" font-size="10" fill="#70757a" text-anchor="end">4000</text>
+<path d="M80.53 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M80.53 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="80.53" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">25</text>
+<path d="M169.66 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M169.66 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="169.66" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">50</text>
+<path d="M258.79 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M258.79 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="258.79" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">75</text>
+<path d="M347.91 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M347.91 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="347.91" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">100</text>
+<path d="M437.04 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M437.04 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="437.04" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">125</text>
+<path d="M526.17 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M526.17 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="526.17" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">150</text>
+<path d="M62.7 32 V336.5 H544" stroke="#5f6368" stroke-width="1.2" fill="none"/>
+<text x="303.35" y="372" font-size="11.5" fill="#202124" text-anchor="middle">number of communities C</text>
+<text x="21.2" y="184.25" font-size="11.5" fill="#202124" text-anchor="middle" transform="rotate(-90 21.2 184.25)">influence spread I(S)</text>
+<g clip-path="url(#plotclip)">
+<path d="M80.53 288.98 L169.66 287.82 L258.79 287.12 L347.91 286.18 L437.04 286.2 L526.17 286.29" fill="none" stroke="#1f5fd0" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="80.53" cy="288.98" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="169.66" cy="287.82" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="258.79" cy="287.12" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="347.91" cy="286.18" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="437.04" cy="286.2" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="526.17" cy="286.29" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<path d="M80.53 161.39 L169.66 85.4 L258.79 58.97 L347.91 51.04 L437.04 85.4 L526.17 98.61" fill="none" stroke="#e8830c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="77.47" y="158.33" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="166.6" y="82.34" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="255.73" y="55.91" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="344.85" y="47.98" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="433.98" y="82.34" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="523.11" y="95.55" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+</g>
+<g>
+<rect x="411.95" y="40" width="124.05" height="42" rx="4" fill="#ffffff" fill-opacity="0.92" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M418.95 53.25 H438.95" stroke="#1f5fd0" stroke-width="2" stroke-linecap="round"/>
+<circle cx="428.95" cy="53.25" r="3" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<text x="443.95" y="56.92" font-size="10.5" fill="#202124">ours</text>
+<path d="M418.95 68.75 H438.95" stroke="#e8830c" stroke-width="2" stroke-linecap="round"/>
+<rect x="426.25" y="66.05" width="5.4" height="5.4" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<text x="443.95" y="72.42" font-size="10.5" fill="#202124">paper (digitised)</text>
+</g>
+</svg>

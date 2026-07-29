@@ -1,0 +1,114 @@
+========================================================================
+CTIM reproduction - data/processed/digg
+  profile   : full
+  figures   : 2,4,5
+  methods   : CTIM, CTIM_CGA, AIR+CGA, CINEMA, Greedy
+  C=100 Z=8 K=1,11,21,31,41,51 seed=42 sampler=mh
+  out       : results/digg-full
+========================================================================
+[prepare] loading dataset from data/processed/digg
+[prepare] digg: U=30358 E=99846 M=3553 F=62 adoptions=1733669
+[prepare] 142034 potential-influence logs (Delta=2592000s) in 4.73s
+[prepare] split 60/20/20 -> train=85220 valid=28406 test=28408
+[prepare] evaluating on 3 test items: [152, 112, 2412]
+[fit] CTIM model C=100 Z=8 (reference): 60+60 Gibbs iters, sampler=mh
+[train_model] C=100 Z=8 U=30358 E=99846 D=85220 M=3553 F=62 sampler=mh
+[train_model] rho=0.5 alpha=6.25 beta=0.01 omega=6.25 eps0=12.05 eps1=0.1
+[train_model] stage 1: sampling item topics (60 iters)
+  [stage 1: topics] iter 1/60  tokens=24767  elapsed=0.05s
+  [stage 1: topics] iter 10/60  tokens=24767  elapsed=0.54s
+  [stage 1: topics] iter 20/60  tokens=24767  elapsed=1.08s
+  [stage 1: topics] iter 30/60  tokens=24767  elapsed=1.62s
+  [stage 1: topics] iter 40/60  tokens=24767  elapsed=2.16s
+  [stage 1: topics] iter 50/60  tokens=24767  elapsed=2.70s
+  [stage 1: topics] iter 60/60  tokens=24767  elapsed=3.25s
+[train_model] stage 1 done in 3.26s
+[train_model] stage 2: sampling communities (60 iters)
+  [stage 2: communities/mh] iter 1/60  events=185066  elapsed=4.88s
+  [stage 2: communities/mh] iter 10/60  events=185066  elapsed=49.18s
+  [stage 2: communities/mh] iter 20/60  events=185066  elapsed=98.51s
+  [stage 2: communities/mh] iter 30/60  events=185066  elapsed=147.73s
+  [stage 2: communities/mh] iter 40/60  events=185066  elapsed=196.96s
+  [stage 2: communities/mh] iter 50/60  events=185066  elapsed=246.33s
+  [stage 2: communities/mh] iter 60/60  events=185066  elapsed=295.72s
+[train_model] stage 2 done in 296.07s
+[train_model] total 299.33s
+[fit] done in 299.80s
+
+=== Fig 3a/3b: spread and running time vs K ===
+[run] CTIM      K=1   spread=   247.72  select=  1.645s (+fit/6=49.967s)  total= 51.612s  [8.8s elapsed]
+[run] CTIM      K=11  spread=   701.48  select=  2.863s (+fit/6=49.967s)  total= 52.830s  [8.9s elapsed]
+[run] CTIM      K=21  spread=   806.34  select=  3.322s (+fit/6=49.967s)  total= 53.290s  [10.1s elapsed]
+[run] CTIM      K=31  spread=   850.97  select=  3.798s (+fit/6=49.967s)  total= 53.766s  [11.5s elapsed]
+[run] CTIM      K=41  spread=   873.33  select=  4.089s (+fit/6=49.967s)  total= 54.057s  [12.3s elapsed]
+[run] CTIM      K=51  spread=   887.59  select=  4.308s (+fit/6=49.967s)  total= 54.275s  [13.0s elapsed]
+[run] CTIM_CGA  K=1   spread=    27.90  select= 27.206s (+fit/6=49.967s)  total= 77.173s  [82.3s elapsed]
+[run] CTIM_CGA  K=11  spread=    64.87  select= 27.459s (+fit/6=49.967s)  total= 77.427s  [83.5s elapsed]
+[run] CTIM_CGA  K=21  spread=   113.95  select= 28.658s (+fit/6=49.967s)  total= 78.625s  [86.8s elapsed]
+[run] CTIM_CGA  K=31  spread=   149.07  select= 29.867s (+fit/6=49.967s)  total= 79.835s  [90.8s elapsed]
+[run] CTIM_CGA  K=41  spread=   154.51  select= 31.222s (+fit/6=49.967s)  total= 81.189s  [94.6s elapsed]
+[run] CTIM_CGA  K=51  spread=   177.46  select= 32.735s (+fit/6=49.967s)  total= 82.702s  [99.1s elapsed]
+[fit] AIR EM (Z=8, <=50 sweeps) on 85220 train logs
+[fit_air] |D+|=85220 |D-|=255660 Z=8  L0=-849316.458443
+[fit_air] sweep   1  L=-749620.729025  (dL=+9.970e+04)
+[fit_air] sweep   2  L=-738812.625211  (dL=+1.081e+04)
+[fit_air] sweep   3  L=-736490.021956  (dL=+2.323e+03)
+[fit_air] sweep   4  L=-735514.919369  (dL=+9.751e+02)
+[fit_air] sweep   5  L=-734925.160118  (dL=+5.898e+02)
+[fit_air] sweep   6  L=-734512.582789  (dL=+4.126e+02)
+[fit_air] sweep   7  L=-734200.235574  (dL=+3.123e+02)
+[fit_air] sweep   8  L=-733950.207006  (dL=+2.500e+02)
+[fit_air] sweep   9  L=-733741.177106  (dL=+2.090e+02)
+[fit_air] sweep  10  L=-733560.146742  (dL=+1.810e+02)
+[fit_air] sweep  11  L=-733398.688669  (dL=+1.615e+02)
+[fit_air] sweep  12  L=-733251.056220  (dL=+1.476e+02)
+[fit_air] sweep  13  L=-733113.158576  (dL=+1.379e+02)
+[fit_air] sweep  14  L=-732981.974319  (dL=+1.312e+02)
+[fit_air] sweep  15  L=-732855.200963  (dL=+1.268e+02)
+[fit_air] sweep  16  L=-732731.038457  (dL=+1.242e+02)
+[fit_air] sweep  17  L=-732608.052314  (dL=+1.230e+02)
+[fit_air] sweep  18  L=-732485.085830  (dL=+1.230e+02)
+[fit_air] sweep  19  L=-732361.203391  (dL=+1.239e+02)
+[fit_air] sweep  20  L=-732235.653723  (dL=+1.255e+02)
+[fit_air] sweep  21  L=-732107.845924  (dL=+1.278e+02)
+[fit_air] sweep  22  L=-731977.333565  (dL=+1.305e+02)
+[fit_air] sweep  23  L=-731843.803610  (dL=+1.335e+02)
+[fit_air] sweep  24  L=-731707.067934  (dL=+1.367e+02)
+[fit_air] sweep  25  L=-731567.055886  (dL=+1.400e+02)
+[fit_air] sweep  26  L=-731423.806819  (dL=+1.432e+02)
+[fit_air] sweep  27  L=-731277.461901  (dL=+1.463e+02)
+[fit_air] sweep  28  L=-731128.254780  (dL=+1.492e+02)
+[fit_air] sweep  29  L=-730976.500957  (dL=+1.518e+02)
+[fit_air] sweep  30  L=-730822.585932  (dL=+1.539e+02)
+[fit_air] sweep  31  L=-730666.952336  (dL=+1.556e+02)
+[fit_air] sweep  32  L=-730510.086384  (dL=+1.569e+02)
+[fit_air] sweep  33  L=-730352.504042  (dL=+1.576e+02)
+[fit_air] sweep  34  L=-730194.737343  (dL=+1.578e+02)
+[fit_air] sweep  35  L=-730037.321334  (dL=+1.574e+02)
+[fit_air] sweep  36  L=-729880.782073  (dL=+1.565e+02)
+[fit_air] sweep  37  L=-729725.626013  (dL=+1.552e+02)
+[fit_air] sweep  38  L=-729572.330987  (dL=+1.533e+02)
+[fit_air] sweep  39  L=-729421.338851  (dL=+1.510e+02)
+[fit_air] sweep  40  L=-729273.049800  (dL=+1.483e+02)
+[fit_air] sweep  41  L=-729127.818274  (dL=+1.452e+02)
+[fit_air] sweep  42  L=-728985.950364  (dL=+1.419e+02)
+[fit_air] sweep  43  L=-728847.702554  (dL=+1.382e+02)
+[fit_air] sweep  44  L=-728713.281638  (dL=+1.344e+02)
+[fit_air] sweep  45  L=-728582.845659  (dL=+1.304e+02)
+[fit_air] sweep  46  L=-728456.505776  (dL=+1.263e+02)
+[fit_air] sweep  47  L=-728334.329026  (dL=+1.222e+02)
+[fit_air] sweep  48  L=-728216.341895  (dL=+1.180e+02)
+[fit_air] sweep  49  L=-728102.534562  (dL=+1.138e+02)
+[fit_air] sweep  50  L=-727992.865587  (dL=+1.097e+02)
+[fit] AIR modularity community detection (target C=100)
+[fit] AIR+CGA preparation done in 261.36s
+[run] AIR+CGA   K=1   spread=     2.82  select= 18.015s (+fit/6=43.559s)  total= 61.575s  [54.1s elapsed]
+[run] AIR+CGA   K=11  spread=    15.94  select= 19.199s (+fit/6=43.559s)  total= 62.758s  [57.6s elapsed]
+[run] AIR+CGA   K=21  spread=    23.51  select= 17.954s (+fit/6=43.559s)  total= 61.513s  [53.9s elapsed]
+[run] AIR+CGA   K=31  spread=    35.87  select= 19.118s (+fit/6=43.559s)  total= 62.677s  [57.4s elapsed]
+[run] AIR+CGA   K=41  spread=    47.60  select= 19.719s (+fit/6=43.559s)  total= 63.279s  [59.2s elapsed]
+[run] AIR+CGA   K=51  spread=    58.86  select= 20.597s (+fit/6=43.559s)  total= 64.157s  [61.8s elapsed]
+[fit] CINEMA modularity community detection (target C=100)
+[fit] CINEMA preparation done in 152.36s
+[run] CINEMA    K=1   spread=     1.35  select=113.377s (+fit/6=25.393s)  total=138.771s  [113.4s elapsed]
+[run] CINEMA    K=11  spread=    16.10  select=516.950s (+fit/6=25.393s)  total=542.343s  [517.0s elapsed]

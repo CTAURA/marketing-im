@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="560" height="380" viewBox="0 0 560 380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img">
+<title>Fig 4 - impact of Z on CTIM (K=20, C=10) - running time</title>
+<defs><clipPath id="plotclip"><rect x="59.08" y="32" width="484.92" height="304.5"/></clipPath></defs>
+<rect x="0" y="0" width="560" height="380" fill="#ffffff"/>
+<text x="59.08" y="22" font-size="14" font-weight="600" fill="#202124">Fig 4 - impact of Z on CTIM (K=20, C=10) - running time</text>
+<rect x="59.08" y="32" width="484.92" height="304.5" fill="#ffffff" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M59.08 313.58 H544 M59.08 300.18 H544 M59.08 290.67 H544 M59.08 283.29 H544 M59.08 277.26 H544 M59.08 272.17 H544 M59.08 267.75 H544 M59.08 263.86 H544 M59.08 237.46 H544 M59.08 224.05 H544 M59.08 214.54 H544 M59.08 207.17 H544 M59.08 201.14 H544 M59.08 196.04 H544 M59.08 191.63 H544 M59.08 187.73 H544 M59.08 161.33 H544 M59.08 147.93 H544 M59.08 138.42 H544 M59.08 131.04 H544 M59.08 125.01 H544 M59.08 119.92 H544 M59.08 115.5 H544 M59.08 111.61 H544 M59.08 85.21 H544 M59.08 71.8 H544 M59.08 62.29 H544 M59.08 54.92 H544 M59.08 48.89 H544 M59.08 43.79 H544 M59.08 39.38 H544 M59.08 35.48 H544" stroke="#eef0f2" stroke-width="1" fill="none"/>
+<path d="M59.08 336.5 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 336.5 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="340" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">-1</tspan></text>
+<path d="M59.08 260.38 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 260.38 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="263.88" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">0</tspan></text>
+<path d="M59.08 184.25 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 184.25 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="187.75" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">1</tspan></text>
+<path d="M59.08 108.12 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 108.12 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="111.62" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">2</tspan></text>
+<path d="M59.08 32 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 32 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="35.5" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">3</tspan></text>
+<path d="M77.04 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M77.04 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="77.04" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">2</text>
+<path d="M141.19 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M141.19 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="141.19" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">4</text>
+<path d="M205.33 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M205.33 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="205.33" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">6</text>
+<path d="M269.47 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M269.47 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="269.47" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">8</text>
+<path d="M333.61 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M333.61 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="333.61" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">10</text>
+<path d="M397.76 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M397.76 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="397.76" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">12</text>
+<path d="M461.9 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M461.9 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="461.9" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">14</text>
+<path d="M526.04 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M526.04 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="526.04" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">16</text>
+<path d="M59.08 32 V336.5 H544" stroke="#5f6368" stroke-width="1.2" fill="none"/>
+<text x="301.54" y="372" font-size="11.5" fill="#202124" text-anchor="middle">number of topics Z</text>
+<text x="21.2" y="184.25" font-size="11.5" fill="#202124" text-anchor="middle" transform="rotate(-90 21.2 184.25)">running time (s)</text>
+<g clip-path="url(#plotclip)">
+<path d="M77.04 276.09 L141.19 274.6 L205.33 274.55 L269.47 273.18 L333.61 272.81 L397.76 270.95 L461.9 270.98 L526.04 269.79" fill="none" stroke="#1f5fd0" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="77.04" cy="276.09" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="141.19" cy="274.6" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="205.33" cy="274.55" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="269.47" cy="273.18" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="333.61" cy="272.81" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="397.76" cy="270.95" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="461.9" cy="270.98" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="526.04" cy="269.79" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<path d="M77.04 80.59 L141.19 63.99 L205.33 59.9 L269.47 58.4 L333.61 57.32 L397.76 56.61 L461.9 55.58 L526.04 55.25" fill="none" stroke="#e8830c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="73.98" y="77.53" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="138.13" y="60.93" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="202.27" y="56.84" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="266.41" y="55.34" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="330.55" y="54.26" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="394.7" y="53.55" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="458.84" y="52.52" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="522.98" y="52.19" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+</g>
+<g>
+<rect x="411.95" y="286.5" width="124.05" height="42" rx="4" fill="#ffffff" fill-opacity="0.92" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M418.95 299.75 H438.95" stroke="#1f5fd0" stroke-width="2" stroke-linecap="round"/>
+<circle cx="428.95" cy="299.75" r="3" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<text x="443.95" y="303.43" font-size="10.5" fill="#202124">ours</text>
+<path d="M418.95 315.25 H438.95" stroke="#e8830c" stroke-width="2" stroke-linecap="round"/>
+<rect x="426.25" y="312.55" width="5.4" height="5.4" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<text x="443.95" y="318.93" font-size="10.5" fill="#202124">paper (digitised)</text>
+</g>
+</svg>

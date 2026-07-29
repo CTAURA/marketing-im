@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="560" height="380" viewBox="0 0 560 380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img">
+<title>Fig 3a - influence spread vs K (digg, C=100, Z=8)</title>
+<defs><clipPath id="plotclip"><rect x="55.9" y="32" width="488.1" height="304.5"/></clipPath></defs>
+<rect x="0" y="0" width="560" height="380" fill="#ffffff"/>
+<text x="55.9" y="22" font-size="14" font-weight="600" fill="#202124">Fig 3a - influence spread vs K (digg, C=100, Z=8)</text>
+<rect x="55.9" y="32" width="488.1" height="304.5" fill="#ffffff" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M55.9 336.5 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M51.9 336.5 H55.9" stroke="#5f6368" stroke-width="1"/>
+<text x="48.9" y="340" font-size="10" fill="#70757a" text-anchor="end">0</text>
+<path d="M55.9 269.33 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M51.9 269.33 H55.9" stroke="#5f6368" stroke-width="1"/>
+<text x="48.9" y="272.83" font-size="10" fill="#70757a" text-anchor="end">200</text>
+<path d="M55.9 202.15 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M51.9 202.15 H55.9" stroke="#5f6368" stroke-width="1"/>
+<text x="48.9" y="205.65" font-size="10" fill="#70757a" text-anchor="end">400</text>
+<path d="M55.9 134.98 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M51.9 134.98 H55.9" stroke="#5f6368" stroke-width="1"/>
+<text x="48.9" y="138.48" font-size="10" fill="#70757a" text-anchor="end">600</text>
+<path d="M55.9 67.8 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M51.9 67.8 H55.9" stroke="#5f6368" stroke-width="1"/>
+<text x="48.9" y="71.3" font-size="10" fill="#70757a" text-anchor="end">800</text>
+<path d="M73.98 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M73.98 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="73.98" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">1</text>
+<path d="M164.37 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M164.37 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="164.37" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">11</text>
+<path d="M254.76 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M254.76 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="254.76" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">21</text>
+<path d="M525.92 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M525.92 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="525.92" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">51</text>
+<path d="M55.9 32 V336.5 H544" stroke="#5f6368" stroke-width="1.2" fill="none"/>
+<text x="299.95" y="372" font-size="11.5" fill="#202124" text-anchor="middle">seed set size K</text>
+<text x="21.2" y="184.25" font-size="11.5" fill="#202124" text-anchor="middle" transform="rotate(-90 21.2 184.25)">influence spread I(S)</text>
+<g clip-path="url(#plotclip)">
+<path d="M73.98 256.81 L164.37 109.76 L254.76 78.87 L525.92 54.49" fill="none" stroke="#1f5fd0" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="73.98" cy="256.81" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="164.37" cy="109.76" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="254.76" cy="78.87" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="525.92" cy="54.49" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<path d="M73.98 316.88 L164.37 315.53 L254.76 316.03 L525.92 302.65" fill="none" stroke="#e8830c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="70.92" y="313.82" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="161.31" y="312.47" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="251.7" y="312.97" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<rect x="522.86" y="299.59" width="6.12" height="6.12" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<path d="M73.98 335.43 L164.37 331.91 L254.76 328.11 L525.92 317.66" fill="none" stroke="#2e9e4f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="73.98,330.84 78.57,335.43 73.98,340.02 69.39,335.43" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<polygon points="164.37,327.32 168.96,331.91 164.37,336.5 159.78,331.91" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<polygon points="254.76,323.52 259.35,328.11 254.76,332.7 250.17,328.11" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<polygon points="525.92,313.07 530.51,317.66 525.92,322.25 521.33,317.66" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<path d="M73.98 335.58 L164.37 326.99 L254.76 323.4 L525.92 318.51" fill="none" stroke="#8a8f98" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon points="73.98,330.99 78.57,339.48 69.39,339.48" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<polygon points="164.37,322.4 168.96,330.89 159.78,330.89" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<polygon points="254.76,318.81 259.35,327.3 250.17,327.3" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<polygon points="525.92,313.92 530.51,322.41 521.33,322.41" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<path d="M73.98 332.37 L164.37 327.98 L254.76 321.72 L525.92 315.89" fill="none" stroke="#e0b013" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M70.07 328.46 L77.89 336.28 M70.07 336.28 L77.89 328.46" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<path d="M160.46 324.07 L168.28 331.89 M160.46 331.89 L168.28 324.07" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<path d="M250.85 317.81 L258.67 325.63 M250.85 325.63 L258.67 317.81" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<path d="M522.01 311.98 L529.83 319.8 M522.01 319.8 L529.83 311.98" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+</g>
+<g>
+<rect x="438.62" y="40" width="97.38" height="88.5" rx="4" fill="#ffffff" fill-opacity="0.92" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M445.62 53.25 H465.62" stroke="#1f5fd0" stroke-width="2" stroke-linecap="round"/>
+<circle cx="455.62" cy="53.25" r="3" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="56.92" font-size="10.5" fill="#202124">CTIM</text>
+<path d="M445.62 68.75 H465.62" stroke="#e8830c" stroke-width="2" stroke-linecap="round"/>
+<rect x="452.92" y="66.05" width="5.4" height="5.4" fill="#e8830c" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="72.42" font-size="10.5" fill="#202124">CTIM_CGA</text>
+<path d="M445.62 84.25 H465.62" stroke="#2e9e4f" stroke-width="2" stroke-linecap="round"/>
+<polygon points="455.62,80.2 459.67,84.25 455.62,88.3 451.57,84.25" fill="#2e9e4f" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="87.92" font-size="10.5" fill="#202124">AIR+CGA</text>
+<path d="M445.62 99.75 H465.62" stroke="#8a8f98" stroke-width="2" stroke-linecap="round"/>
+<polygon points="455.62,95.7 459.67,103.19 451.57,103.19" fill="#8a8f98" stroke="#ffffff" stroke-width="1"/>
+<text x="470.62" y="103.42" font-size="10.5" fill="#202124">CINEMA</text>
+<path d="M445.62 115.25 H465.62" stroke="#e0b013" stroke-width="2" stroke-linecap="round"/>
+<path d="M452.17 111.8 L459.07 118.7 M452.17 118.7 L459.07 111.8" stroke="#e0b013" stroke-width="2.1" stroke-linecap="round" fill="none"/>
+<text x="470.62" y="118.92" font-size="10.5" fill="#202124">Greedy</text>
+</g>
+</svg>

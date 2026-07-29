@@ -1,0 +1,9 @@
+Z,spread_ours,spread_paper,seconds_ours,seconds_paper,fit_seconds,select_seconds,n_runs,n_nonempty_communities,pp_max,status
+2,42.495,2500,0.6216,230,0.6096,0.0120,3,10,0.43789,ok
+4,44.993,3500,0.6503,380,0.6413,0.0090,3,10,0.21878,ok
+6,44.797,4180,0.6512,430,0.6413,0.0099,3,10,0.14593,ok
+8,44.254,4320,0.6789,450,0.6701,0.0088,3,10,0.10942,ok
+10,39.187,4320,0.6865,465,0.6791,0.0074,3,10,0.08755,"DEGENERATE (max pp < h; spread is an |S| artefact, not a measurement)"
+12,42.544,4320,0.7263,475,0.7189,0.0073,3,10,0.07303,"DEGENERATE (max pp < h; spread is an |S| artefact, not a measurement)"
+14,40.377,4320,0.7255,490,0.7172,0.0083,3,10,0.06255,"DEGENERATE (max pp < h; spread is an |S| artefact, not a measurement)"
+16,38.251,4320,0.7522,495,0.7449,0.0073,3,10,0.05476,"DEGENERATE (max pp < h; spread is an |S| artefact, not a measurement)"

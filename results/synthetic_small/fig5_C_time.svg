@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="560" height="380" viewBox="0 0 560 380" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" role="img">
+<title>Fig 5 - impact of C on CTIM (K=20, Z=8) - running time</title>
+<defs><clipPath id="plotclip"><rect x="59.08" y="32" width="484.92" height="304.5"/></clipPath></defs>
+<rect x="0" y="0" width="560" height="380" fill="#ffffff"/>
+<text x="59.08" y="22" font-size="14" font-weight="600" fill="#202124">Fig 5 - impact of C on CTIM (K=20, Z=8) - running time</text>
+<rect x="59.08" y="32" width="484.92" height="304.5" fill="#ffffff" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M59.08 244.84 H544 M59.08 191.22 H544 M59.08 153.17 H544 M59.08 123.66 H544 M59.08 99.55 H544 M59.08 79.17 H544 M59.08 61.51 H544 M59.08 45.93 H544" stroke="#eef0f2" stroke-width="1" fill="none"/>
+<path d="M59.08 336.5 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 336.5 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="340" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">-1</tspan></text>
+<path d="M59.08 32 H544" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M55.08 32 H59.08" stroke="#5f6368" stroke-width="1"/>
+<text x="52.08" y="35.5" font-size="10" fill="#70757a" text-anchor="end">10<tspan font-size="7.8" dy="-4.2">0</tspan></text>
+<path d="M77.04 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M77.04 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="77.04" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">2</text>
+<path d="M180.66 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M180.66 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="180.66" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">5</text>
+<path d="M284.27 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M284.27 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="284.27" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">8</text>
+<path d="M353.35 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M353.35 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="353.35" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">10</text>
+<path d="M422.43 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M422.43 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="422.43" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">12</text>
+<path d="M526.04 32 V336.5" stroke="#dfe1e5" stroke-width="1" fill="none"/>
+<path d="M526.04 336.5 V340.5" stroke="#5f6368" stroke-width="1"/>
+<text x="526.04" y="352.5" font-size="10" fill="#70757a" text-anchor="middle">15</text>
+<path d="M59.08 32 V336.5 H544" stroke="#5f6368" stroke-width="1.2" fill="none"/>
+<text x="301.54" y="372" font-size="11.5" fill="#202124" text-anchor="middle">number of communities C</text>
+<text x="21.2" y="184.25" font-size="11.5" fill="#202124" text-anchor="middle" transform="rotate(-90 21.2 184.25)">running time (s)</text>
+<g clip-path="url(#plotclip)">
+<path d="M77.04 144.13 L180.66 120.91 L284.27 97.7 L353.35 83.21 L422.43 69.8 L526.04 54.1" fill="none" stroke="#1f5fd0" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="77.04" cy="144.13" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="180.66" cy="120.91" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="284.27" cy="97.7" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="353.35" cy="83.21" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="422.43" cy="69.8" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<circle cx="526.04" cy="54.1" r="3.4" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+</g>
+<g>
+<rect x="471.8" y="302" width="64.2" height="26.5" rx="4" fill="#ffffff" fill-opacity="0.92" stroke="#dfe1e5" stroke-width="1"/>
+<path d="M478.8 315.25 H498.8" stroke="#1f5fd0" stroke-width="2" stroke-linecap="round"/>
+<circle cx="488.8" cy="315.25" r="3" fill="#1f5fd0" stroke="#ffffff" stroke-width="1"/>
+<text x="503.8" y="318.93" font-size="10.5" fill="#202124">ours</text>
+</g>
+</svg>
