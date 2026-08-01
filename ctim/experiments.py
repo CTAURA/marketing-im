@@ -109,7 +109,7 @@ from ctim.plotting import ascii_table, line_chart, write_csv
 # Method registry
 # --------------------------------------------------------------------------
 
-ALL_METHODS = ("CTIM", "CTIM_CGA", "AIR+CGA", "CINEMA", "Greedy")
+ALL_METHODS = ("CTIM", "CTIM_CGA", "AIR+CGA", "CINEMA", "Greedy", "CTIM_EA")
 
 #: Whether a method consumes the evaluated item's topic mixture.  Topic-blind
 #: methods are run once per K and scored against every test item's weights.
@@ -119,6 +119,7 @@ TOPIC_AWARE = {
     "AIR+CGA": True,
     "CINEMA": False,
     "Greedy": False,
+    "CTIM_EA": True,
 }
 
 #: SPEC.md Section 7 / Table 2 -- the paper's feature comparison.
@@ -129,6 +130,7 @@ TABLE2_ROWS = [
     ("AIR+CGA", "yes", "yes", "MixedGreedy (Monte-Carlo IC)", "Barbieri et al. [35] + CGA [22]"),
     ("CTIM_CGA", "yes", "yes", "MixedGreedy (Monte-Carlo IC)", "this paper + CGA [22]"),
     ("CTIM", "yes", "yes", "MIA, exact Eq (17)/(18)", "this paper"),
+    ("CTIM_EA", "yes", "yes", "MIA, exact Eq (17)/(18) + EA", "CTIM-EA alternative"),
 ]
 
 # --------------------------------------------------------------------------
@@ -716,7 +718,7 @@ class Experiment:
 
     def method_fit_seconds(self, method: str) -> float:
         """The method's one-off, K- and item-independent preparation cost."""
-        if method in ("CTIM", "CTIM_CGA"):
+        if method in ("CTIM", "CTIM_CGA", "CTIM_EA"):
             return self.model_fit_seconds
         if method == "AIR+CGA":
             return self._air_prepared()[2]
@@ -790,6 +792,48 @@ class Experiment:
                                 use_celf=True)
             seeds, extra = res.seeds, dict(res.extra)
             own = float(res.spread)
+
+        elif method == "CTIM_EA":
+            from ctim.ctim_ea import CTIM_EA2, initialize_l_comm
+            mia = self.evaluator_for(item)
+            
+            # Compute L_MIA
+            single_influences = []
+            for u in range(self.ds.n_users):
+                single_influences.append((mia.influence({u}), u))
+            single_influences.sort(reverse=True)
+            L_MIA = [u for _, u in single_influences[:K]]
+            
+            # Compute L_MIOA
+            mioa_sizes = []
+            for u in range(self.ds.n_users):
+                mioa_sizes.append((len(mia.mioa(u)[0]), u))
+            mioa_sizes.sort(reverse=True)
+            L_MIOA = [u for _, u in mioa_sizes[:K]]
+            
+            # Compute L_comm
+            L_comm = initialize_l_comm(self.model, self.model.pi, K)
+            
+            # Configure pop and g_max
+            pop_size = max(10, K) if not self.cfg.quick else 10
+            g_max = 30 if not self.cfg.quick else 5
+            
+            ea = CTIM_EA2(
+                G=self.ds,
+                K=K,
+                pop=pop_size,
+                g_max=g_max,
+                Pc=0.6,
+                Pm=0.1,
+                L_comm=L_comm,
+                L_MIA=L_MIA,
+                L_MIOA=L_MIOA,
+                mia=mia,
+                seed=cfg.seed
+            )
+            seeds = ea.run()
+            extra = {}
+            own = float(ea.evaluate(seeds))
 
         else:
             raise ValueError("unknown method %r" % (method,))
