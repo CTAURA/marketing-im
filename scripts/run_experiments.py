@@ -160,8 +160,9 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--h", type=float, default=0.1,
                    help="MIA threshold of Eq (15)/(16); the paper uses 0.1")
     g.add_argument("--dp-tiebreak", dest="dp_tiebreak",
-                   choices=("consistent", "paper-literal"), default="consistent",
-                   help="Algorithm 2 line 36; see SPEC.md Section 6 note 1")
+                   choices=("paper-true", "consistent", "paper-literal"),
+                   default="paper-true",
+                   help="Algorithm 2 lines 35/36; see DEVIATIONS.md 1.1")
     g.add_argument("--zeta", type=float, default=1.0,
                    help="weight in eps0 = zeta * ln(N_neg / C^2)")
     g.add_argument("--air-em-iters", dest="air_em_iters", type=int, default=50,

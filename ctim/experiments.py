@@ -225,7 +225,7 @@ class ExperimentConfig:
 
     # secondary knobs (defaults follow SPEC.md Section 8)
     h: float = 0.1
-    dp_tiebreak: str = "consistent"
+    dp_tiebreak: str = "paper-true"
     delta: int = 30 * 24 * 3600
     max_logs_per_item: int = 0
     zeta: float = 1.0
@@ -261,7 +261,7 @@ class ExperimentConfig:
             ["Gibbs sampler", self.sampler],
             ["AIR EM iters", self.air_em_iters],
             ["MIA threshold h (Eq 15)", self.h],
-            ["Algorithm 2 line-36 tie-break", self.dp_tiebreak],
+            ["Algorithm 2 line-35/36 reading", self.dp_tiebreak],
             ["Delta for Definition 1 (s)", self.delta],
             ["max logs per item (0 = uncapped)", self.max_logs_per_item],
         ]

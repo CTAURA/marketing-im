@@ -288,7 +288,7 @@ Output: seed node set S
 32: for k = 1..K do
 33:   for m = 1..C do
 34:     dI_m = max( I_m(S union u) - I_m(S) ),  u in c_m
-35:     I[m,k] = max( I[m-1,k], I[m,k-1] + dI_m )
+35:     I[m,k] = max( I[m-1,k], I[C,k-1] + dI_m )
 36:     if I[C,k-1] + dI_m >= I[m-1,k] then
 37:       s[m,k] = m
 38:     else
@@ -302,11 +302,17 @@ Output: seed node set S
 ```
 
 ### Reading notes / decisions (documented deviations)
-1. **Line 36 uses `I[C,k-1]`** while line 35 uses `I[m,k-1]`. This is internally
-   inconsistent (the argmax tie-break must match the max taken on line 35).
-   We implement the *consistent* version (`I[m,k-1] + dI_m >= I[m-1,k]`) as the default,
-   and expose `--dp-tiebreak paper-literal` to run the literal `I[C,k-1]` form.
-   Both are recorded in the results.
+1. **Lines 35 and 36 both read `I[C,k-1]`** — they agree, and the recurrence is
+   internally consistent. Earlier revisions of this file mis-transcribed line 35 as
+   `I[m,k-1] + dI_m`, which manufactured a contradiction that is not in the paper;
+   see DEVIATIONS.md 1.1 for the correction and its consequences.
+   Because `I[C,k-1]` does not depend on `m`, unrolling line 35 over `m` gives
+   `I[C,k] = I[C,k-1] + max_m dI_m` and `s[C,k] = argmax_m dI_m`: the DP degenerates
+   to picking the community with the largest marginal gain each round, which is what
+   CGA [22] does and what the surrounding prose describes.
+   `dp_tiebreak="paper-true"` (the default) implements this. The two historical
+   readings `consistent` and `paper-literal` remain selectable for comparison, and
+   the choice is recorded in the results.
 2. `I_m(.)` is the influence spread computed **within community m's induced subgraph**,
    so `S ∩ c_m = S_m`; we pass `S_m`.
 3. Line 11 computes `P(v|z,u)` only for pairs in `D`; but Eq (11) is well-defined for any
@@ -362,6 +368,17 @@ omega = 50 / Z
 eps0  = zeta * ln(N_neg / C^2)      eps1 = 0.1
 h (MIA threshold) = 0.1
 ```
+
+Verified against the rendered page 10 (the symbol font has no ToUnicode map, so
+`pdftotext` yields `{, , , , }` in every mode and this pairing cannot be
+recovered from the text layer): *"As regards to the hyperparameters
+{alpha, rho, beta, omega, epsilon}, we adopt a fixed value, i.e., rho = 50/C,
+beta = 0.01, alpha = 50/Z, omega = 50/Z, and eps0, eps1 are set as Section 4."*
+
+Note `alpha = 50/Z` puts a **total** Dirichlet mass of 50 on `theta_c` whatever
+`Z` is — a strong pull toward the uniform `1/Z`. Combined with the
+`P(v|i,u) <= max_{c,z} theta_cz` bound this is the mechanism behind
+DEVIATIONS.md Section 7, and it is the paper's own choice, not a deviation.
 
 ### Parameter grids
 * `K` from 1 to 50 (figures plot K in {1, 11, 21, 31, 41, 51})

@@ -168,7 +168,7 @@ def detect_communities(pi) -> list:
     """Eq (19). Returns comm[v] in [0, C)."""
 
 def ctim_select_seeds(model, ds, item, K, h=0.1,
-                      dp_tiebreak="consistent",   # or "paper-literal"
+                      dp_tiebreak="paper-true",   # or "consistent"/"paper-literal"
                       edge_weights=None) -> list:
     """Algorithm 2 in full, lines 1-45. Returns the seed list of length K,
     in selection order. Must record per-line timings in `.last_stats`."""

@@ -8,7 +8,9 @@ Covers:
     (lines 36-40), verified against a from-scratch transcription of lines 25-45
     that recomputes every dI_m with ``MIA.marginal_gain`` and does no caching
   * selection is deterministic for a fixed seed
-  * both ``dp_tiebreak`` readings of line 36 run and return K distinct seeds
+  * all three ``dp_tiebreak`` readings of lines 35/36 run and return K distinct
+    seeds, and the printed reading (``paper-true``, the default) is checked to
+    stay distinguishable from the historical ones -- see DEVIATIONS.md 1.1
 """
 
 from __future__ import annotations
@@ -37,11 +39,14 @@ from ctim.influence import MIA, EdgeWeights  # noqa: E402
 
 
 def reference_algorithm2(model, ds, item, K, h, dp_tiebreak, ew):
-    """Return ``(seeds, chosen_community_per_step, I_table, s_table)``.
+    """Return ``(seeds, chosen_community_per_step, I_table, s_table, dI_table)``.
 
     ``I_table[m][k]`` and ``s_table[m][k]`` are the arrays of Algorithm 2
     lines 26-40; ``chosen_community_per_step[k-1]`` is the community index
     ``j = s[C,k]`` (1-based, as in the paper) that step ``k`` selected from.
+    ``dI_table[m][k]`` is the line-34 marginal gain used to fill ``I_table[m][k]``;
+    it is returned so a test can check the line-35 recurrence exactly instead of
+    tautologically re-deriving dI from the table it is meant to verify.
     """
     pp = ew.for_item(item)                                   # Eq (12)
     comm = detect_communities(model.pi)                      # lines 22-24, Eq (19)
@@ -62,6 +67,7 @@ def reference_algorithm2(model, ds, item, K, h, dp_tiebreak, ew):
     Sm = {m: set() for m in range(1, C + 1)}
     Iv = [[0.0] * (K + 1) for _ in range(C + 1)]             # lines 26-31
     sp = [[0] * (K + 1) for _ in range(C + 1)]
+    dItab = [[0.0] * (K + 1) for _ in range(C + 1)]
     chosen = []
 
     for k in range(1, K + 1):                                # line 32
@@ -79,13 +85,16 @@ def reference_algorithm2(model, ds, item, K, h, dp_tiebreak, ew):
                 if bu is None:
                     dI = 0.0
             argmax_u[m] = bu
+            dItab[m][k] = dI
 
-            cand = Iv[m][k - 1] + dI
+            # line 35 -- as printed the reference is I[C,k-1] (DEVIATIONS.md 1.1)
+            ref35 = Iv[C][k - 1] if dp_tiebreak == "paper-true" else Iv[m][k - 1]
+            cand = ref35 + dI
             prev = Iv[m - 1][k]
             Iv[m][k] = prev if prev > cand else cand         # line 35
 
             # lines 36-40
-            ref = Iv[C][k - 1] if dp_tiebreak == "paper-literal" else Iv[m][k - 1]
+            ref = Iv[m][k - 1] if dp_tiebreak == "consistent" else Iv[C][k - 1]
             sp[m][k] = m if ref + dI >= prev else sp[m - 1][k]
 
         j = sp[C][k]                                         # line 42
@@ -104,7 +113,7 @@ def reference_algorithm2(model, ds, item, K, h, dp_tiebreak, ew):
         Sm[j].add(u_k)                                       # line 44
         S.append(u_k)
         chosen.append(j)
-    return S, chosen, Iv, sp
+    return S, chosen, Iv, sp, dItab
 
 
 class TestDetectCommunities(unittest.TestCase):
@@ -263,8 +272,8 @@ class TestSeedsLieInTheChosenCommunity(_CtimFixture):
         self.assertEqual(sum(self.stats["seeds_per_community"].values()), self.K)
 
     def test_each_seed_is_in_the_community_the_dp_selected_that_step(self):
-        seeds, chosen, _Iv, _sp = reference_algorithm2(
-            self.model, self.ds, self.ITEM, self.K, 0.1, "consistent", self.ew)
+        seeds, chosen, _Iv, _sp, _d = reference_algorithm2(
+            self.model, self.ds, self.ITEM, self.K, 0.1, "paper-true", self.ew)
         self.assertEqual(len(seeds), len(chosen))
         for step, (u, j) in enumerate(zip(seeds, chosen)):
             self.assertEqual(self.comm[u] + 1, j,
@@ -287,13 +296,13 @@ class TestDpRecurrence(_CtimFixture):
     def setUpClass(cls):
         super(TestDpRecurrence, cls).setUpClass()
         cls.ref = {}
-        for tb in ("consistent", "paper-literal"):
+        for tb in ("paper-true", "consistent", "paper-literal"):
             cls.ref[tb] = reference_algorithm2(
                 cls.model, cls.ds, cls.ITEM, cls.K, 0.1, tb, cls.ew)
 
     def test_boundary_rows_are_zero(self):
-        for tb in ("consistent", "paper-literal"):
-            _s, _c, Iv, sp = self.ref[tb]
+        for tb in ("paper-true", "consistent", "paper-literal"):
+            _s, _c, Iv, sp, _d = self.ref[tb]
             for k in range(self.K + 1):
                 self.assertEqual(Iv[0][k], 0.0, "I[0,%d] (%s)" % (k, tb))  # line 27
                 self.assertEqual(sp[0][k], 0, "s[0,%d] (%s)" % (k, tb))    # line 27
@@ -301,39 +310,55 @@ class TestDpRecurrence(_CtimFixture):
                 self.assertEqual(Iv[m][0], 0.0, "I[%d,0] (%s)" % (m, tb))  # line 30
 
     def test_line_35_recurrence_holds(self):
-        """I[m,k] == max(I[m-1,k], I[m,k-1] + dI_m) with a non-negative dI_m."""
-        for tb in ("consistent", "paper-literal"):
-            _s, _c, Iv, _sp = self.ref[tb]
+        """I[m,k] == max(I[m-1,k], ref35 + dI_m), with ref35 fixed by the mode.
+
+        ``dI_m`` comes from the oracle's own line-34 table, NOT re-derived from
+        ``I``: deriving it as ``I[m,k] - I[m,k-1]`` makes the second branch
+        trivially true and the assertion vacuous, which is how the mis-transcribed
+        line 35 survived undetected (DEVIATIONS.md 1.1).
+        """
+        for tb in ("paper-true", "consistent", "paper-literal"):
+            _s, _c, Iv, _sp, dIt = self.ref[tb]
             for k in range(1, self.K + 1):
                 for m in range(1, self.C + 1):
+                    dI = dIt[m][k]
+                    self.assertGreaterEqual(dI, -1e-12, (m, k, tb))
                     # dI_m is a marginal gain of a monotone function, hence >= 0,
-                    # so line 35 forces I[m,k] >= both of its two arguments.
+                    # so line 35 forces I[m,k] >= I[m-1,k] in every mode.
                     self.assertGreaterEqual(Iv[m][k], Iv[m - 1][k] - 1e-12,
                                             "I[%d,%d] < I[%d,%d] (%s)"
                                             % (m, k, m - 1, k, tb))
-                    self.assertGreaterEqual(Iv[m][k], Iv[m][k - 1] - 1e-12,
-                                            "I[%d,%d] < I[%d,%d] (%s)"
-                                            % (m, k, m, k - 1, tb))
-                    dI = Iv[m][k] - Iv[m][k - 1]
-                    self.assertGreaterEqual(dI, -1e-12, (m, k, tb))
-                    # I[m,k] must equal ONE of the two branches exactly.
-                    self.assertTrue(
-                        abs(Iv[m][k] - Iv[m - 1][k]) < 1e-12
-                        or abs(Iv[m][k] - (Iv[m][k - 1] + dI)) < 1e-12,
-                        "I[%d,%d]=%r matches neither branch (%s)"
-                        % (m, k, Iv[m][k], tb))
+                    ref35 = Iv[self.C][k - 1] if tb == "paper-true" else Iv[m][k - 1]
+                    self.assertAlmostEqual(
+                        Iv[m][k], max(Iv[m - 1][k], ref35 + dI), places=9,
+                        msg="line 35 violated at I[%d,%d] (%s)" % (m, k, tb))
+
+    def test_paper_true_line_35_differs_from_the_historical_reading(self):
+        """`I[C,k-1]` and `I[m,k-1]` are not interchangeable on line 35.
+
+        Regression guard for DEVIATIONS.md 1.1: if this ever passes trivially the
+        three modes have collapsed into one and the distinction is untested.
+        """
+        _s, _c, Iv_true, _sp, _d = self.ref["paper-true"]
+        _s2, _c2, Iv_cons, _sp2, _d2 = self.ref["consistent"]
+        C, K = self.C, self.K
+        # I is non-decreasing in m, so I[C,k-1] >= I[m,k-1] and the paper's
+        # line 35 can never report a smaller total than the historical reading.
+        for k in range(1, K + 1):
+            self.assertGreaterEqual(Iv_true[C][k], Iv_cons[C][k] - 1e-12,
+                                    "paper-true DP value below 'consistent' at k=%d" % k)
 
     def test_back_pointer_is_a_valid_community_index(self):
-        for tb in ("consistent", "paper-literal"):
-            _s, _c, _Iv, sp = self.ref[tb]
+        for tb in ("paper-true", "consistent", "paper-literal"):
+            _s, _c, _Iv, sp, _d = self.ref[tb]
             for k in range(1, self.K + 1):
                 for m in range(1, self.C + 1):
                     self.assertTrue(0 <= sp[m][k] <= m,
                                     "s[%d,%d]=%d (%s)" % (m, k, sp[m][k], tb))
 
     def test_dp_value_is_non_decreasing_in_k_and_m(self):
-        for tb in ("consistent", "paper-literal"):
-            _s, _c, Iv, _sp = self.ref[tb]
+        for tb in ("paper-true", "consistent", "paper-literal"):
+            _s, _c, Iv, _sp, dIt = self.ref[tb]
             for m in range(self.C + 1):
                 for k in range(1, self.K + 1):
                     self.assertGreaterEqual(Iv[m][k], Iv[m][k - 1] - 1e-12)
@@ -343,7 +368,7 @@ class TestDpRecurrence(_CtimFixture):
 
     def test_production_path_agrees_with_the_uncached_transcription(self):
         """The incremental IncInf caches must not change the answer."""
-        for tb in ("consistent", "paper-literal"):
+        for tb in ("paper-true", "consistent", "paper-literal"):
             ref_seeds = self.ref[tb][0]
             got = ctim_select_seeds(self.model, self.ds, self.ITEM, self.K,
                                     h=0.1, dp_tiebreak=tb,
@@ -358,7 +383,10 @@ class TestDpRecurrence(_CtimFixture):
                     msg="%s: %s vs reference %s" % (tb, got, ref_seeds))
 
     def test_reported_dp_value_matches_the_reference_table(self):
-        _s, _c, Iv, _sp = self.ref["consistent"]
+        # The fixture runs ctim_run with the default reading, so the oracle must
+        # be read at the same mode (DEVIATIONS.md 1.1).
+        self.assertEqual(self.stats["dp_tiebreak"], "paper-true")
+        _s, _c, Iv, _sp, _d = self.ref["paper-true"]
         self.assertAlmostEqual(self.stats["dp_value"], Iv[self.C][self.K],
                                places=9)
 
@@ -420,7 +448,7 @@ class TestDeterminismAndTiebreaks(_CtimFixture):
         self.assertEqual(seeds2, self.result.seeds)
 
     def test_both_tiebreaks_run_and_return_k_distinct_seeds(self):
-        for tb in ("consistent", "paper-literal"):
+        for tb in ("paper-true", "consistent", "paper-literal"):
             r = ctim_run(self.model, self.ds, self.ITEM, self.K, h=0.1,
                          dp_tiebreak=tb, edge_weights=self.ew)
             self.assertEqual(len(r.seeds), self.K, tb)

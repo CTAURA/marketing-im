@@ -64,12 +64,18 @@ Documented deviations (SPEC.md Section 6, "Reading notes"):
    identical, bit-for-bit up to floating point, and costs O(U C^2 + E C) per
    item.  `D` is used for *learning* the model, not for defining the graph.
 
- * **Line 36 vs line 35.**  Line 35 takes `max(I[m-1,k], I[m,k-1] + dI_m)` but
-   line 36 tests `I[C,k-1] + dI_m >= I[m-1,k]`.  The back-pointer therefore does
-   not track the max that was actually taken.  `dp_tiebreak="consistent"` (the
-   default) tests `I[m,k-1] + dI_m >= I[m-1,k]`, so `s` always records which
-   branch of line 35 won; `dp_tiebreak="paper-literal"` reproduces the printed
-   `I[C,k-1]` form.  Both are supported so the two can be compared.
+ * **Lines 35 and 36.**  Both lines as printed read `I[C,k-1]`:
+   line 35 is `max(I[m-1,k], I[C,k-1] + dI_m)` and line 36 tests
+   `I[C,k-1] + dI_m >= I[m-1,k]`.  They agree, and the recurrence is coherent.
+   (SPEC.md previously mis-transcribed line 35 as `I[m,k-1] + dI_m`, which
+   invented a contradiction; see DEVIATIONS.md 1.1.)  Since `I[C,k-1]` does not
+   depend on `m`, unrolling line 35 gives `I[C,k] = I[C,k-1] + max_m dI_m` and
+   `s[C,k] = argmax_m dI_m`, i.e. the DP degenerates to greedy over communities
+   -- which is exactly what the paper's prose and CGA [22] describe.
+   `dp_tiebreak="paper-true"` (the default) implements that.  The two historical
+   readings are kept selectable for comparison:
+   `"consistent"` uses `I[m,k-1]` on both lines, `"paper-literal"` uses
+   `I[m,k-1]` on line 35 and `I[C,k-1]` on line 36.
 
  * **Line 34, `I_m`.**  `I_m` is the influence spread evaluated on community
    `m`'s *node-induced subgraph*, hence `S` intersected with `c_m` is exactly
@@ -321,7 +327,7 @@ class _CommunitySeedState:
 
 
 def ctim_select_seeds(model, ds, item, K, h=0.1,
-                      dp_tiebreak="consistent",  # or "paper-literal"
+                      dp_tiebreak="paper-true",  # or "consistent"/"paper-literal"
                       edge_weights=None) -> list:
     """Algorithm 2 in full, lines 1-45.  Returns the seed list, in selection order.
 
@@ -334,10 +340,12 @@ def ctim_select_seeds(model, ds, item, K, h=0.1,
     item          the item id whose topic mix defines the edge weights, Eq (12)
     K             seed-set size
     h             MIA threshold of Eq (15)/(16); the paper uses 0.1
-    dp_tiebreak   "consistent" (default, line 36 reads `I[m,k-1]`, matching the
-                  max actually taken on line 35) or "paper-literal" (line 36
-                  reads `I[C,k-1]` exactly as printed).  See the module
-                  docstring and SPEC.md Section 6.
+    dp_tiebreak   which reading of Algorithm 2 lines 35/36 to run:
+                  "paper-true"    (default) both lines read `I[C,k-1]`, as printed
+                  "consistent"    both lines read `I[m,k-1]`
+                  "paper-literal" line 35 reads `I[m,k-1]`, line 36 `I[C,k-1]`
+                  See the module docstring, SPEC.md Section 6 and
+                  DEVIATIONS.md 1.1.
     edge_weights  a pre-built `ctim.influence.EdgeWeights`; supply it to share
                   the O(U*C^2) `a_u` cache across several items
 
@@ -348,10 +356,10 @@ def ctim_select_seeds(model, ds, item, K, h=0.1,
     32-41) and `select` (lines 42-45).  Those five are disjoint and sum to
     `total`.
     """
-    if dp_tiebreak not in ("consistent", "paper-literal"):
+    if dp_tiebreak not in ("paper-true", "consistent", "paper-literal"):
         raise ValueError(
-            "dp_tiebreak must be 'consistent' or 'paper-literal', got %r"
-            % (dp_tiebreak,)
+            "dp_tiebreak must be 'paper-true', 'consistent' or 'paper-literal', "
+            "got %r" % (dp_tiebreak,)
         )
     K = int(K)
     t_start = time.time()
@@ -457,15 +465,18 @@ def ctim_select_seeds(model, ds, item, K, h=0.1,
                 # with I_m taken on c_m's induced subgraph, so S n c_m = S_m.
                 _u_m, dI_m = st.best()
 
-            # Algorithm 2, line 35
-            cand = Iv[m][k - 1] + dI_m
+            # Algorithm 2, line 35.  As printed the reference is I[C,k-1]
+            # (column k-1 is complete, so the read is well defined); the
+            # "consistent"/"paper-literal" modes keep the historical I[m,k-1].
+            ref35 = Iv[C][k - 1] if dp_tiebreak == "paper-true" else Iv[m][k - 1]
+            cand = ref35 + dI_m
             prev = Iv[m - 1][k]
             Iv[m][k] = prev if prev > cand else cand
 
-            # Algorithm 2, lines 36-40.  "consistent" uses the same I[m,k-1]
-            # that line 35 maximised over; "paper-literal" uses the printed
-            # I[C,k-1] (column k-1 is complete, so this read is well defined).
-            ref = Iv[C][k - 1] if dp_tiebreak == "paper-literal" else Iv[m][k - 1]
+            # Algorithm 2, lines 36-40.  Only "consistent" departs from the
+            # printed I[C,k-1] here, so that `s` records the branch its own
+            # line 35 took.
+            ref = Iv[m][k - 1] if dp_tiebreak == "consistent" else Iv[C][k - 1]
             if ref + dI_m >= prev:
                 sp[m][k] = m       # Algorithm 2, line 37
             else:
@@ -538,7 +549,7 @@ def ctim_select_seeds(model, ds, item, K, h=0.1,
 ctim_select_seeds.last_stats = {}
 
 
-def ctim_run(model, ds, item, K, h=0.1, dp_tiebreak="consistent",
+def ctim_run(model, ds, item, K, h=0.1, dp_tiebreak="paper-true",
              edge_weights=None) -> RunResult:
     """Convenience wrapper: run Algorithm 2 and score it with the common evaluator.
 
@@ -784,10 +795,11 @@ if __name__ == "__main__":
                     if bu is None:
                         dI = 0.0
                 argmax_u[m] = bu
-                cand = Iv[m][k - 1] + dI
+                ref35 = Iv[Cn][k - 1] if dp_tiebreak == "paper-true" else Iv[m][k - 1]
+                cand = ref35 + dI
                 prev = Iv[m - 1][k]
                 Iv[m][k] = prev if prev > cand else cand     # line 35
-                ref = Iv[Cn][k - 1] if dp_tiebreak == "paper-literal" else Iv[m][k - 1]
+                ref = Iv[m][k - 1] if dp_tiebreak == "consistent" else Iv[Cn][k - 1]
                 sp[m][k] = m if ref + dI >= prev else sp[m - 1][k]  # lines 36-40
             j = sp[Cn][k]                                    # line 42
             u_k = argmax_u.get(j)
@@ -805,7 +817,7 @@ if __name__ == "__main__":
             S.append(u_k)
         return S
 
-    ref_seeds = reference_ctim(model, ds, item, K, 0.1, "consistent", ew)
+    ref_seeds = reference_ctim(model, ds, item, K, 0.1, "paper-true", ew)
     same = ref_seeds == res.seeds
     if not same:
         mia_full = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp_full, h=0.1)
@@ -817,10 +829,20 @@ if __name__ == "__main__":
     print("[6] dp_tiebreak variants and DP-table invariants")
     lit = ctim_run(model, ds, item, K, h=0.1, dp_tiebreak="paper-literal",
                    edge_weights=ew)
-    print("      consistent    seeds=%s  I(S)=%.6f" % (res.seeds, res.spread))
+    con = ctim_run(model, ds, item, K, h=0.1, dp_tiebreak="consistent",
+                   edge_weights=ew)
+    print("      paper-true    seeds=%s  I(S)=%.6f" % (res.seeds, res.spread))
+    print("      consistent    seeds=%s  I(S)=%.6f" % (con.seeds, con.spread))
     print("      paper-literal seeds=%s  I(S)=%.6f" % (lit.seeds, lit.spread))
-    check("paper-literal also returns K seeds", len(lit.seeds) == K)
-    check("paper-literal seeds are distinct", len(set(lit.seeds)) == len(lit.seeds))
+    for name, r in (("paper-literal", lit), ("consistent", con)):
+        check("%s also returns K seeds" % name, len(r.seeds) == K)
+        check("%s seeds are distinct" % name, len(set(r.seeds)) == len(r.seeds))
+    # DEVIATIONS.md 1.1: I is non-decreasing in m, so I[C,k-1] >= I[m,k-1] and
+    # the printed line 35 can never report a smaller DP total than the
+    # historical reading.  Guards against the three modes collapsing into one.
+    check("paper-true DP value >= consistent DP value",
+          res.extra["dp_value"] >= con.extra["dp_value"] - 1e-12,
+          "%.6f vs %.6f" % (res.extra["dp_value"], con.extra["dp_value"]))
     try:
         ctim_select_seeds(model, ds, item, K, dp_tiebreak="nonsense")
         check("unknown dp_tiebreak raises ValueError", False)

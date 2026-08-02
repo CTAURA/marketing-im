@@ -1,0 +1,769 @@
+Applied Intelligence
+https://doi.org/10.1007/s10489-018-1387-8
+
+Community-based influence maximization for viral marketing
+
+Huimin Huang1 · Hong Shen1,2 · Zaiqiao Meng1 · Huajian Chang1 · Huaiwen He1
+
+© Springer Science+Business Media, LLC, part of Springer Nature 2019
+
+Abstract
+Derived from the idea of word-to-mouth advertising and with applying information diffusion theory, viral marketing
+attracts wide research interests because of its business value. As an effective marketing strategy, viral marketing is to
+select a small set of initial users based on trust among close social circles of friends or families so as to maximize the
+spread of influence in the social network. In this paper, we propose a new community-based influence maximization
+method for viral marketing that integrates community detection into influence diffusion modeling, instead of performing
+community detection independently, to improve the performance. We first build a comprehensive latent variable model
+which captures community-level topic interest, item-topic relevance and community membership distribution of each user,
+and we propose a collapsed Gibbs sampling algorithm to train the model. Then we infer community-to-community influence
+strength using topic-irrelevant influence and community topic interest, and further infer user-to-user influence strength using
+community-to-community influence strength and community membership distribution of each user. Finally we propose
+a community-based heuristic algorithm to mine influential nodes that selects the influential nodes with a divide-and-
+conquer strategy, considering both topic-aware and community-relevant to enhance quality and improve efficiency. Extensive
+experiments are conducted to evaluate effectiveness and efficiency of our proposals. The results validate our ideas and show
+the superiority of our method compared with state-of-the-art influence maximization algorithms.
+
+Keywords Social networks · Viral marketing · Influence maximization · Latent variable model
+
+1 Introduction                                                (LT) and Independent Cascade (IC) to model the process
+                                                              of influence diffusion, proved influence maximization in
+Due to its main application in business, i.e., word-of-mouth  LT and IC is a NP-hard problem, and proposed a greedy
+or viral marketing, influence maximization has attracted      algorithm with an approximate degree of (1 - 1/e) to solve
+wide research interests in recent years. Influence maxi-      the problem. Such models summarize previous research
+mization aims to solve the problem of selecting a fixed       experience in statistical physics, social psychology and
+size set of seed nodes in a social network to maximize        marketing, and maintain good properties in process of infor-
+the influence spread. Domingos and Richardson [1, 2]          mation diffusion, such as monotonicity and submodeling.
+proposed an influence diffusion model in social networks
+based on Markov Random Field in 2001, when influence             Influence maximization problem has been extensively
+diffusion model was first introduced into the field of com-   studied and several influence maximization algorithms have
+puter science. Kempe et al. [3] proposed Linear Threshold     been proposed including [3­12]. Thereinto, algorithms in
+                                                              [3, 5, 7, 8, 11] are based on greedy. They take full advantage
+     Hong Shen                                                of submodularity and monotony of IC model or LT model,
+     shenh3@mail.sysu.edu.cn                                  and to evaluate the influence, they utilize Monte Carlo
+                                                              simulations, which can ensure the accuracy of the influence
+     Huimin Huang                                             spread value. However, tens of thousands of Monte Carlo
+     huanghm45@gmail.com                                      simulations in large-scale social networks would greatly
+                                                              reduce the efficiency of algorithms. Algorithms in [4, 6, 9­
+1 School of Data and Computer Science,                        12] emphasize analyzing and exploiting topology structure
+     Sun Yat-sen University, Guangzhou, China                 of network to improve the algorithm, and they achieve much
+                                                              higher execution efficiency than greedy algorithms.
+2 School of Computer Science, University of Adelaide,
+     Adelaide, Australia                                         Recently, community-based influence maximization
+                                                              algorithms are proposed. As community-based methods
+                                                                H. Huang et al.
+
+find seed node set within the communities instead of over       network as members of communities. Lots of previous
+the whole network, these algorithms are generally more          researches have disclosed that users in communities share
+efficient than traditional greedy algorithms and suitable to    common properties or attributes [14­16]. In other words,
+be performed parallelized. However, there are still large       communities have their attributes including community inte-
+drawbacks in the existing community-based influence maxi-       rest etc. Assuming each user may behave as the member
+mization algorithms. Firstly, the existing algorithms usually   of different communities in different settings, user interest
+consist of two steps: community detection and seed selec-       is interrelated with community interest by the community
+tion that causes non-trivial complexity and limits their        membership distribution of the user. As is known that pur-
+efficiency and scalability. Secondly, some of them assume       chase behaviors are relevant to user interest. In consequence,
+influence strength between users is known, which may            purchase behaviors are related with community interest.
+be infeasible because, in some cases, influence strength        Besides, studies on sociology and marketing demonstrate
+between users are unobservable. And some of them com-           that the behaviors of some individual users are highly
+pute influence strength between users depending only on         volatile [17], which makes it difficult to accurately mine
+social relationships, overlooking topic distribution on the     user preferences and diffusion properties at individual level.
+social links which is exactly crucial to improve the accuracy   While, community-level model not only can avoid volatil-
+of prediction. Thirdly, they tend to select uniform seed node   ity of individual users but also alleviate the problem of
+set for promoting different items that may be unreasonable      data sparsity. Thus we utilize the compact community-level
+because in the real word, different items have different topic  extraction to capture user interest more effectively.
+distribution.
+                                                                   Community-based topic-aware influence maximization
+   To overcome above limitations, we propose Community-         faces several challenges. Firstly, communities and topic
+based Topic-aware Influence Maximization (CTIM), which          distribution over users and items are hidden, which are
+is topic-aware and finds influential nodes with regards to      three critical factors in the process of influence diffusion.
+communities, integrating influence strength computation         We need to model the correlation between them suitably.
+with community detection in a comprehensive latent variable     Secondly, we would like to integrate the process of
+model, through which user topic relevance and item topic        community detection into the influence diffusion modeling
+relevance can be extracted effectively. Our motivation is       to improve the efficiency of the algorithm. Thirdly,
+from the observations of marketing and psychology that          influence strength between users is unknown. Besides, we
+(1) Friend relationship influences user making decision on      are required to select different seed set to prompt different
+item selection; (2) The process of influence propagation can    items since different items have different topic distribution.
+reveal users' preference; (3) Different items have differ-
+ent characteristics. Thus, we first design a comprehensive         To sum up, our major contributions in this paper are:
+latent variable model to learn user interest and item char-
+acteristics as well as perform community detection, jointly     (1) We propose a new community-based influence max-
+applying influence diffusion modeling and probabilistic               imization method, which mines latent topic informa-
+topic modeling; then propose a community-based influence              tion as well as community memberships in the pro-
+maximization algorithm to find the influential nodes.                 cess of influence propagation, thereby infers influence
+                                                                      strength between users and finds influential nodes with
+   We integrate the community detection into the influence            regards to communities.
+diffusion modeling instead of performing community detec-
+tion independently, which improves the efficiency of the        (2) We develop a comprehensive latent variable model. It
+algorithm largely. We assume that each user may behave as             infers item topic relevance and captures user interest
+the member of different communities in different settings.            across communities avoiding volatility of individual
+Thus, we denote each user to belong to different communi-             users and alleviating problem of data sparsity. It
+ties with a multinomial distribution. Through our latent vari-        integrates the community detection into the influence
+able model, community membership distribution of each                 diffusion modeling that improves the efficiency of the
+user can be inferred, and then community detection can                algorithm largely.
+be achieved. For example, assuming we have inferred user
+v's community membership distribution  vc1 ,  vc2 , ...         (3) We propose a community-based influence maximization
+and  vcj is the maximum of community membership value,                algorithm which is also topic-aware, therefore it has
+user v would be divided into community cj .                           superiority in both efficiency and accuracy of prediction.
+
+   We argue that purchase behaviors are relevant to com-        (4) We provide a thorough analysis of our influence
+munities' interests. Fundamentally, community is a group              maximization method, and perform experiments to
+of users that have denser connections among the group than            demonstrate its effectiveness and efficiency compared
+with the rest of the network [13]. Users engage in social             with the state-of-the-art algorithms.
+
+                                                                   The rest of this paper is organized as follows. Section 2
+                                                                reviews related work. Section 3 presents the preliminaries
+Community-based influence maximization for viral marketing
+
+including notation, terminology and our task. Section 4        a reverse reachable set (Reverse Reachable). If the number
+details the proposed method. Section 5 reports our             of nodes in the RR set is huge, the influence of the node is
+experimental evaluation. Section 6 concludes the paper.        also huge. The DegreeDiscount algorithm [11] evaluates the
+                                                               influence of nodes based on the number of degrees.
+2 Previous work
+                                                                  Cao et al. [20] first propose the community-based influ-
+2.1 Influence maximization                                     ence maximization algorithm OASNET (OptimalAllocation
+                                                               in a Social NETwork). The algorithm assumes that different
+Following the general Greedy algorithm proposed by Kempe       communities are independent of each other and influence
+et al. [3] to solve the problem of maximizing influence,       cannot be transmitted between communities. The commu-
+Leskovec et al. [7] propose the CELF algorithm, which is       nity structure is detected by the CNM (Clauset-Newman-
+based on the submodularity of the objective function in LT     Moore) algorithm [21]. Wang et al. propose community-
+and IC models and employs lazy-forward optimization. The       based greedy algorithm CGA with a provable approxima-
+idea behind CELF is that the marginal gain provided by         tion guarantee [22]. Chen et al. [23] use the heat diffusion
+a node in the current iteration cannot be better than the      model to study the community-based influence maximiza-
+marginal gain provided by the node in the previous iteration.  tion problem and propose the Community-based Influence
+Compared with the general Greedy algorithm, this method        Maximization (CIM) algorithm. Li et al. [24] consider the
+greatly improves the efficiency by nearly 700 times.           conformity of nodes and propose the community-based
+                                                               influence maximization algorithm CINEMA (Conformity-
+   Goyal et al. [5] propose a CELF++ algorithm based           aware Influence Maximization). Community-based influ-
+on CELF algorithm, which improved the efficiency of the        ence maximization algorithms are generally more efficient
+original algorithm (CELF) by 35%­55%. Chen et al. [11]         than traditional greedy algorithms, and suitable to be per-
+propose the NewGreedy and MixedGreedy algorithms using         formed parallelized.
+the idea of reducing the scale of the propagation map. The
+NewGreedy algorithm obtains a subgraph by deleting each        2.2 Probabilistic topic modeling
+edge in the original image with a certain probability, and
+calculates the influence spread of the node in the subgraph.   Probability topic modeling is aimed at finding the topic
+The MixedGreedy algorithm adds CELF improvements               structure hidden in the massive documents. Since Latent
+based on the NewGreedy algorithm. Since these two              Dirichlet Allocation (LDA) was first proposed by Blei in
+algorithms still require a lot of simulations, they cannot be  2003 [25], probability topic model has been widely studied
+applied to large-scale networks. Cheng et al. [8] propose the  in the field of probability semantic analysis. Yan et al.
+StaticGreedy algorithm, which guarantees the optimization      [26] proposes a short text modeling method, biterm topic
+of the submodularity of the target by repeatedly using the     model (BTM), which directly models the generation of
+generated subgraph, and improves the efficiency of the         word co-occurrence patterns (i.e. biterms) in the whole
+algorithm by two orders of magnitude. Luo et al. [18] use      corpus. Yin and Wang [27] applies a Dirichlet multinomial
+PageRank to evaluate the influence of nodes firstly, and       mixture model-based approach for short text clustering.
+select a certain percentage of nodes as candidate seed nodes   Yang et al. [28] incorporates demographic information of
+to improve the efficiency of the algorithm.                    review authors into topic modeling to accomplish review
+                                                               sentiment classification and user attribute prediction. Many
+   Depth-based heuristic algorithm [11], PMIA [4], MIA         topic-based detection models by LDA have already been
+[19] are proposed, which estimate the node influence           proposed including topic change detection model [41],
+through the path function. Thereinto, MIA algorithm esti-      semantically enhanced document retrieval model [42], LDA
+mates the influence from node u to node v using maximum        and Linear Algebra based LSA combination model [43],
+influence path (MIP), i.e., the path with maximum activa-      GSLDA model for group spamming detection [44]. Beside,
+tion probability, and sets a probability threshold  for MIP.   the dynamic topic model has been proposed including
+The algorithm builds maximum influence in-arborescence         online multi-scale dynamic topic model [29], dynamic
+of a target node v by assembling all the maximum influ-        clustering of streaming short documents [30], dynamic user
+ence paths from source nodes to target node v, obtains         clustering topic model [31]. With the high popularity of
+activated probability of the node v through recursive com-     social medias, recently some works propose to integrates
+putations, and computes influence spread of seed set by        content topic discovery and social influence analysis in
+summing the activated probabilities of all nodes in the        the same generative process. Representative models include
+network.                                                       extension of LDA model to handle popular nodes in
+                                                               social networks [32], social-relational topic model [33],
+   Tang et al. proposes TIM+ [9] and IMM [10], which sam-      Followship-LDA (FLDA) model [34].
+ple nodes from the network propagation graphs to establish
+                                                                                                                 H. Huang et al.
+
+2.3 Social influence diffusion                                       Table 1 Basic notations used in this paper
+
+Initially motivated by viral marketing, the problem of social        Symbol      Description
+influence diffusion emerges which increasingly concerns the
+propagation of ideas, opinions or rumors etc. through social         S, K        Seed set, size of seed set
+networks. Barbieri et al. [35] proposes Topic-aware Inde-            C, Z, M, F  Number of communities, topics, items and
+pendent Cascade (TIC) Model, where the user-to-user influ-                        attributes
+ence probabilities depend on the topics, and an Expectation-         I, U, E, D  Set of items, users, links, potential-influence
+Maximization method is used to learn parameters, but the                          logs
+semantic information in the networks has not been utilized,          U, E, D     Number of users, links, potential-influence
+thereby missing important opportunities to better capture                         logs
+the properties of influence propagation. Chen et al. [36]            Ev, Dv      The set of links towards v, the set of
+considers a deadline constraint to reflect the time-critical                      potential-influence logs with v as
+effect in influence diffusion and develops a new propaga-            Ev, Dv       a propagation target
+tion model, independent cascade model with meeting events            d           Size of Ev, Dv
+to capture the delay of propagation in time. Hu et al. [37]          z           Potential-influence log
+models retweet network and posts by a community level dif-                       Multinomial distribution over
+fusion model. Zhang et al. [38] models retweeting process            i            attribute values in matrix A
+with a hierarchical community-level information diffusion            zi           specific to topic z
+model, which combines semantic analysis and social influ-            wi          Multinomial distribution over topics of item i
+ence analysis. Liu et al. [39] utilizes the heterogeneous link       v           The topic of item i
+information and textual content to construct a generative                        The bag of attribute values of item i
+graphical model and learn user topic interests and influence         cd , cd     Multinomial distribution over
+between users.                                                                    community specific to user v
+                                                                     se, se      Communities associated with user v and u of
+3 Preliminaries                                                                   potential-influence log d = (u, v, i)
+                                                                     c           Communities associated with user v and u of
+Before we describe our method, we first briefly review               c c          friend relation link e = (u, v)
+our notation and terminology and introduce the task to be                        The topic interest of community c
+addressed.                                                           Ie          Community-level influence strength
+                                                                     Id           of community c and c
+3.1 Notation and terminology                                                     Indicator of the existence of link e
+                                                                                 Indicator of the existence of
+Let directed graph G = (U , E) be the friend relationship            , , ,        potential-influence log d
+network, where U denotes the set of nodes and E denotes                          i.e. (0, 1), Beta priors to 
+the set of directed links. Let L be the set of purchase logs                     Dirichlet priors to  v,  c, , 
+which are represented as triples {(U ser, I tem, T ime)}, i.e.,
+(u, i, t), indicating that user u adopted item i at time t.          Definition 1 (Potential-influence log) A potential-
+We assume that each item i  I is associated with a                   influence log d = (u, v, i) is constructed from two purchase
+mixture of words as its binary features, and let A                   logs u, i, tp and v, i, tq where tq - tp   and (u, v) 
+{0, 1}M×F be item attribute matrix with ai  {0, 1}F                  E, meaning that v purchasing item i is potentially influ-
+being the attribute vector of i, and M, F being the num-             enced by user u. In practice, threshold  is set manually
+ber of items and attributes respectively. e.g. An item (an           [35]. The set of potential-influence logs is denoted as D.
+restaurant) includes 10 attributes, i.e., Mexican food, Chi-
+nese food, French food, Italian food, RestaurantsTakeOut,            Definition 2 (Community) A community c  [1, 2, ..., C]
+BusinessParking-garage, BusinessParking-street, Business             consists of nodes which share some common properties
+Parking-validated, BusinessParking-lot, BusinessParking-             or preferences. Each user v  U may belong to
+valet, and ai{1, 0, 0, 0, 1, 0, 1, 0, 0, 0} is the attribute vector  multiple communities with a multinomial distribution v.
+of item i.                                                           Accordingly, vc indicates the probability that user v be the
+                                                                     member of community c.
+   For ease of reference, we list the basic notations in
+Table 1, and briefly introduce some basic concepts that we           Definition 3 (Topic) A topic z  [1, 2 . . . Z] is a
+use in the remainder.                                                multinomial distribution over attributes of items, denoted
+Community-based influence maximization for viral marketing
+
+as z. Every potential-influence log d is associated with a         (2) running a community-based influence maximization
+topic zi which is sampled for item i according to its topic              algorithm F that satisfies:
+distribution.
+                                                                         cz, p(z | i), vc-FS
+Definition 4 (Community-topic relevance) Every com-
+munity c has a topic-relevant distributions, i.e., topic interest        where S is the set of the most influential nodes, and
+cz, which represents that as the propagation target, c influ-            |S| = K.
+ences the purchase of an item on topic z.
+
+Definition 5 (Community-level influence) We assume that            4 The proposed method
+each potential-influence log d=(u, v, i) depends on commu-
+nities c , c of u, v according to the community-topic rele-        To solve above problems, we propose the CTIM, a
+vance cz and the community-level influence strength c c.           community-based influence maximization method that
+                                                                   integrates a probabilistic generative model with a influence
+3.2 Task formulation                                               maximization algorithm to infer latent variables and select
+                                                                   influential nodes effectively. The probabilistic generative
+We formally define our task of community-based influence           model captures the community-topic relevance and item-
+maximization as follows:                                           topic relevance by jointly modeling influence diffusion
+                                                                   and probabilistic topic, while the influence maximization
+   Given size of seed set K, a network G, the set of potential-    algorithm identify the influential nodes with topic-aware
+influence logs D, the item attribute matrix A, our task is         and community-based strategy.
+to (1) first infer community membership distribution of user
+vc, latent community-topic relevance cz and item-topic                Our CTIM is composed of two steps. In Step 1, we uti-
+relevance p(z | i) while capturing the community-level             lize the Comprehensive Latent Variable Model to capture
+influence according to the potential-influence logs; (2) then      community-level topic interest  c, community membership
+compute the most influential nodes set with the size of K          distribution of each user and item-topic relevance. In Step
+through an effective influence maximization algorithm.             2, we infer community-to-community influence strength
+                                                                   P (c | z, c ) using topic-irrelevant influence c c and com-
+   According to the task, we need to solve two problems:           munity topic interest  c, and further infer user-to-user influ-
+                                                                   ence strength using community-to-community influence
+(1) designing a model to infer latent variables:                   strength and community membership distribution of each
+
+      G, D, A-cz, p(z | i), vc
+
+Fig. 1 Graphical representation
+of our comprehensive latent
+variable model
+                                                                H. Huang et al.
+
+user. Then we select the influential nodes using the thought    Nneg = U (U - 1)(1 + D/E) - D - E and  is a tunable
+of the divide and conquer method that presents superior-        weight.
+ity in efficiency. We will further detail the two steps in the
+following subsections.
+
+4.1 Comprehensive latent variable model
+
+4.1.1 Model description
+
+Our comprehensive latent variable model is a probabilistic      4.1.2 Model inference
+
+generative model of item attributes, user edges and their       Following [40], we use collapsed Gibbs sampling method
+                                                                to estimate the parameters of our model. As item-topic
+potential-influence logs inferred from the purchase logs.       generation is independent of influence diffusion in our
+                                                                model, our Gibbs sampling process is composed of two
+We take both influence logs and friend relation network         steps. First, we iteratively sample hidden variables z. After
+                                                                the Gibbs Sampling converges, we use those samples to
+into account when modeling influence diffusion for the          estimate the unknown parameters ,  and obtain topic
+                                                                distribution zi of each item i; Second, we iteratively sample
+observation that influence logs are sparser than friend         hidden variables s, s , c, c . After the Gibbs Sampling
+                                                                converges, we estimate the unknown parameters ,  , 
+relationship links. Thus, we use friend relation network as     with the samples. Due to space constraints, we show only
+                                                                the derived Gibbs sampling formulas, omitting the detailed
+a supplementary to interact with potential-influence logs       derivation process.
+
+to mimic the process of influence diffusion. There are
+
+basically three components in our generative process, i.e.,
+
+the generation of item attributes, user edges and potential-
+
+influence logs. The probabilistic graphical description of
+
+our generative model is presented in Fig. 1, and its
+
+generative process is presented in Algorithm 1.
+   To generate attributes of an item i  I, we draw
+
+a multinomial i from a Dirichlet prior ; then for
+each attribute wij in item i: (1) first draw a topic zi
+from multinomial i; (2) then draw an attribute wij from
+multinomial zi .
+
+   For generating the user edge, we assume that each user
+
+may behave as the member of different communities in
+
+different settings. Thus, we denote each user to belong to
+different communities with a multinomial distribution  v,
+and use  vc to denote the probability that user v acts as
+a member of community c. For each link e (u, v)  E,
+user u acts as member of community se, and user v acts
+as member of community se. A Bernoulli distribution sese
+is used to denote influence strength between community se
+and community se, which determines the probability of the
+presence of link e.
+
+   When generating the potential-influence logs, for each
+potential-influence log d = (u, v, i)  D, user u acts as
+member of community cd , and user v acts as member of
+community cd . We define the topic interest of community
+c as  c. A Bernoulli distribution cdcd is used to denote
+influence strength between community cd and community
+cd . The presence and absence of influence d between
+community cd and community cd is denoted with a indicator
+Id , which is determined by two factors: cdcd and  c. As
+in [37], the priors to c c is set as a Beta(0, 1), in the
+hyperparameters of which, negative samples are implicitly
+modeled, i.e., 0 =  ln(Nneg/C2) and 1 = 0.1, where
+Community-based influence maximization for viral marketing
+
+Sample latent topic zij for each attribute wij in matrix A       c as propagation target. Thus replacing nc,z in Formula (5)
+                                                                 with M nc,i · P (z | i), we can get Formula (6) as follows.
+P (zij = z | z¬ij , w)
+
+ ni,z +  ·                nz,wij +                          (1)  P (cd = c, cd = c | c¬d , c¬d , z¬i , zi = z, ·)
+
+         Z(ni,z + )       M×F (nz,wij + )                         nu,c +  · nv,c +  · nc,c + 1
+                                                                       C (nu,c + ) C (nv,c + ) nc,c + 0+1
+where ni,z refers to the number of times that topic z has been
+observed with an attribute in item i, and nz,wij denotes the     ·        M nc,i · P (z | i) +                       (6)
+number of times that attribute wij has been observed with
+topic z.                                                               Z( M nc,i · P (z | i) + )
+
+                                                                    After all Gibbs Sampling converges, the unknown
+
+   After the Gibbs Sampling of latent topic converges, we        parameters can be estimated as follows.
+
+can estimate parameters ,  as follows.                                    nv,c + 
+                                                                          C (nv,c + )
+iz =     ni,z +                                             (2)  vc =                                                (7)
+         Z(ni,z + )
+                                                                            nc ,c + 1
+zw =       nz,w +                                           (3)  c  c  =  nc ,c + 0+1                                (8)
+         M×F (nz,w + )
+
+   Also, we can infer item-topic relevance P (z | i) by          cz =        M nc,i · P (z | i) +                    (9)
+                                                                          Z( M nc,i · P (z | i) + )
+counts.
+
+Sample community indicator se , se for each edge e =             4.2 Community-based influence maximization
+(u, v)  E
+
+P (se = c, se = c | s¬e, s¬e, ·)                                 In this section, we show how to infer influence strength
+                                                                 between individual users specific to item i, introduce
+         nu,c +     )  ·  nv,c +     )  ·    nc ,c + 1      (4)  our influence computation model, and then present our
+         C (nu,c +        C (nv,c +        nc ,c + 0+1           community-based influence maximization algorithm.
+
+where nu,c indicates the number of times when user               4.2.1 Inference of user-to-user influence strength
+u acts as a member of community c in all links and
+
+potential-influence logs, nc ,c is the number of links from      The diffusion probabilities between two communities for all
+community c to community c and potential-influence logs          the topics z  [1, 2...Z] are composed of the production of
+                                                                 community-level influence strength and propagation-target
+with community c as source community and community c             community's topic interest:
+
+as target community.
+
+Sample community indicator cd , cd for each potential-           P (c | z, c ) = c c · cz.                           (10)
+influence log d = (u, v, i )  D For each potential-
+influence log d (u, v, i), we first draw item i's topic             The user-to-user influence probabilities for all the topics
+distribution zi and then apply the following Gibbs sampling      z  [1, 2...Z] are determined by community memberships
+formula:                                                         and community-level diffusion probabilities:
+
+P (cd = c, cd = c | c¬d , c¬d , z¬i , zi = z, ·)                 P (v | z, u) = vc · uc · P (c | z, c ).             (11)
+
+         nu,c +        ·  nv,c +        ·    nc ,c + 1                    c,c
+         C (nu,c +        C (nv,c +        nc ,c + 0+1
+                    )                )                              The user-to-user influence strength over item i is the
+                                                                 weighted average of topic-relevant influence probabilities
+·  nc,z +                                                   (5)  w.r.t. the topic multinomial distribution of item i:
+   Z(nc,z + )
+
+where nc,z denotes the number of potential-influence logs                 Z
+which is relevant to topic z and with community c as
+                                                                 P (v | i, u) = P (z | i) · P (v | z, u).            (12)
+
+propagation target.                                                       z=1
+
+   Every potential-influence log d is associated with a topic
+
+zi according to the item i in d (u, v, i). Thus, according       4.2.2 Influence computation model
+to item-topic relevance P (z | i), nc,z can be computed as
+                                                                 We utilize MIA model [19] as influence computation model
+   M nc,i · P (z | i), where nc,i is the number of potential-    in our algorithm since MIA has better performance and
+influence logs which is about item i and with community
+                                                                                                H. Huang et al.
+
+scalability, especially for large-scale social networks. MIA             4.2.3 Community-based influence maximization algorithm
+model proposes to estimate the influence from node u to
+node v using maximum influence path (MIP). For a given                   Divide-and-conquer is a problem-solving strategy that can
+node v in the graph G, there are several paths from u to                 predigest the scope of questions and reduce the complex-
+v which are non-cyclic sequences of users. We denote the                 ity of computing. Motivated by this thought, we design
+set of paths from u to v as P ath(G, u, v) and represent                 a influence maximization algorithm based on community
+one path in the set as P = u = w1, w2, ...wr = v . In the                partition. Supposing we have inferred that all the users
+independent cascade (IC) diffusion model, the probability                belong to corresponding community, i.e., community detec-
+of u activating v through the path P is the product of all               tion has been implemented, the main idea of our algorithm
+probabilities of wk activating wk+1, where wk is the node                is to choose the community in which the k-th seed node
+on the path P :                                                          comes into being, mine the k-th seed node in this exact
+                                                                         community and repeat step 1 and step 2 K times until
+      r -1                                                               finding a seed set with K nodes. As CGA Algorithm in
+                                                                         [22], we propose to use dynamic programming to choose
+pp(P ) = pp(wk, wk+1).                              (13)                 which community the k-th seed node should come from. A
+                                                                         maximum influence arborescence (MIA) model [19] is uti-
+      k=1                                                                lized as approximation for better performance in computing
+                                                                         influence diffusion. Additionally, we accomplish commu-
+  Maximum influence path from u to v is defined as                       nity detection by inferring which community a user belongs
+                                                                         to according to the values of community memberships of the
+MI P (u, v) = arg max {pp(P ) | P  P ath(G, u, v)} .                     user, i.e., the user belongs to the community corresponding to
+                                                                         the largest community membership as shown in formula (19):
+                               P
+
+                                                                   (14)
+
+   We build a maximum influence in-arborescence MI I A                   cmv    arg  max   v,c  (19)
+(v, h) by assembling all the maximum influence paths from
+u  U \ {v}, with v as its root and h as threshold:                                     c
+
+MI I A(v, h) = uU,pp(MI P (u,v))hMI P (u, v).       (15)                 where m  [1, 2...C] and cmv denotes user v belongs
+                                                                         to community cm. When a user has two or more equal
+   The maximization influence out-arborescence MI OA
+(v, h) is:                                                               community memberships, we assign the user to an arbitrary
+
+                                                                         community. Now we have accomplished the community
+
+MI OA(v, h) = uU,pp(MI P (v,u))hMI P (v, u). (16)                        detection since the communities that every node belongs to
+
+                                                                         have been obtained.
+
+   If the activated probability of maximum influence path                     Our work is different from the CGA Algorithm primarily
+from u to v is less than h, i.e., pp(MI P (u, v)) < h, MIA
+model assumes v can not be activated by u. In this paper, we             in that (1) CGA assumes influence strength between pairs
+set h = 0.1. With MI I A(v, h), the activated probability of
+node v is computed as follows.                                           of nodes are known that decreases the difficulties of the
+
+                                                                         algorithm, while our method computes influence strength
+
+                                                                         between users by a comprehensive latent variables model
+
+                                                                         and an inference process; (2) CGA adopts a two-step
+
+ap(v | S) =                                                              community detection algorithm to detect communities, the
+ 1,
+                        vS                                               time complexity of which is non-trivial, while our method
+
+  0,                                            N in(v) =                computes community memberships of users through latent
+  1-  wNin(v)(1-ap(w | S) · pp(w, v)) otheres
+                                                                         variables generative model and Gibbs sampling that
+
+                                                    (17)                 increases the efficiency largely; (3) after selecting the
+
+                                                                         community, from which the k-th seed should generate,
+
+where Nin(v) represents in-neighbors set of node v and                   CGA mines the k-th seed using MixedGreedy algorithm,
+pp(w, v) denotes the probability of w activating v. Note
+that activated probability of node w, i.e., ap(w | S),                   while our method employs MIA model as influence
+can be computed recursively through w's in-neighbors.
+Similarly, we can estimate the activated probabilities of                computation model, which is more efficient and scalable
+all nodes and obtain the influence spread I (S) of seed
+set S:                                                                   than MixedGreedy; (4) CGA is not topic-aware, while our
+
+                                                                         method is topic-aware, that means the influence between
+
+                                                                         pairs of users is measured by topic interest of users and
+
+                                                                         different items with different topic distribution should be
+
+                                                                         assigned different seed set. This can definitely improve
+
+I (S) = ap(v | S).                                  (18)                 prediction accuracy significantly. Our method is outlined as
+
+      vV                                                                 Algorithm 2.
+Community-based influence maximization for viral marketing
+
+                                                               In lines 1­21, Algorithm 2 first computes user-to-
+                                                            user influence strength on all items. In lines 22­24, the
+                                                            algorithm compares the community membership values and
+                                                            accomplishes community detection. In lines 25­31, the
+                                                            algorithm does some initializations. In lines 32­41, with
+                                                            MIA model as influence computation model, the algorithm
+                                                            computes which community the k-th seed node should come
+                                                            from. It computes marginal influence of any node u in
+                                                            community m under seed set S and selects the maximum
+                                                            marginal influence as marginal influence w.r.t. community
+                                                            m under seed set S. It applies dynamic programming
+                                                            process to select community cj , from which the k-th seed
+                                                            node should be mined. Then, in lines 42­45, the algorithm
+                                                            utilizes MIA model to find the exact k-th seed node in
+                                                            community cj by the rule of maximum marginal influence,
+                                                            and updates the targeted seed set S as well as seed set Sj for
+                                                            the community. After K iterations, the algorithm finds the
+                                                            target seed set S with size of K.
+
+                                                            4.3 Complexity analysis
+
+                                                            We proceed to analyze the time complexity of our CTIM
+                                                            method. First, we discuss the time complexity of the gener-
+                                                            ative process. Given parameters C and Z fixed, the time of
+                                                            the generative process is linear to the size of input data and
+                                                            times of iterations, i.e., O(T1M + T2(E + D)), where T1
+                                                            denotes times of iterations in sampling latent topics and T2
+                                                            denotes times of iterations in sampling s, s , c, c . In each
+                                                            iteration in sampling latent topics, the time complexity is
+                                                            O(ZF ). In each iteration in sampling s, s , c, c , the time
+                                                            complexity of sampling community indicators associated
+                                                            with each link and each potential-influence log is O(C2).
+
+                                                               Second, we discuss the complexity of our community-
+                                                            based influence maximization algorithm (Algorithm 2). It
+                                                            takes O(C2Z + C2D + MDZ + U C) time to compute
+                                                            user-to-user influence strength on all items and compare
+                                                            community membership values (lines 1­24). It takes O(K)
+                                                            time to initialize the arrays I [0, k] and s[0, k], and takes
+                                                            O(C) time to initialize S, S1, S2, ..., SC and the array
+                                                            I [m, 0] (lines 25­31). Supposing the largest community is
+
+                                                            Table 2 Feature comparison of different methods
+
+                                                                     Features
+
+                                                                     Community-based                         Topic-aware
+
+                                                            Greedy                                           ·
+                                                                                                             ·
+                                                            CINEMA   ·                                       ·
+
+                                                            AIR+CGA  ·
+
+                                                            CTIMCGA  ·
+
+                                                            CTIM     ·
+                                                               H. Huang et al.
+
+Fig. 2 Performance comparison experiments on Yelp dataset
+
+cp, lines 32­41 need O(KCTp) time where Tp is the time            CINEMA: Proposed in [24], it is a community-based
+to compute the influence spread of a node in community cp.     influence maximization algorithm.
+Suppose the maximal running time expended to compute
+MI I A(v,  ) is tip for any v  cp, thus the running time of       AIR+CGA: As CGA does not consider topics, we extend
+Tp is O(| cp | tip + nipnop log | cp |), where | cp | denotes  CGA to AIR+CGA to support our comparison experiments.
+the number of nodes in community cp, nip = maxvcp {|           This is a method that integrates topic diffusion model AIR
+MI I A(v,  ) |} and nop = maxvcp {| MI OA(v,  ) |}.            [35] with community detection and seed-set selection of
+It takes O(K | cp | Tp) time for lines 42­45 to mine           CGA.
+nodes using MIA model. Therefore, the time complexity of
+algorithm 3 is O(KCTp + K | cp | Tp) if O(KCTp + K |              CTIMCGA: As CGA does not consider topics, we extend
+cp | Tp) >> O(C2Z + C2D + MDZ + U C).                          CGA to CTIMCGA to support our comparison experiments.
+                                                               This is a variation of CTIM by swapping out our seed-set
+5 Experimental evaluation                                      selection procedure with seed-set selection of CGA. The
+                                                               only difference between CTIMCGA and CTIM is influence
+5.1 Data set                                                   computation model.
+
+We use two real-world and publicly available datasets: Yelp       We use 60% potential influence logs as train set and
+dataset challenge 20141 and Digg dataset.2 Yelp dataset        20% potential influence logs as validation set, and set 20%
+challenge 2014 contains 366,715 users, 2,949,285 links,        potential influence logs and all links in friend relationship
+61,184 items, and Digg dataset contains 30,358 users,          graph as test set. We train all methods by setting the size
+99,846 directed arcs, 7,100 items.                             of seed set K to vary from 1 to 50. We train CTIM and
+                                                               the baseline CTIMCGA by setting the number of topics Z to
+   For Yelp dataset challenge 2014, we do not have data        vary from 2 to 16 and setting the number of communities C
+directly reflecting purchase time, so we assume the time at    to vary from 25 to 150.
+which the user reviews the item is the time when the item is
+purchased. Besides, we disregard the unfrequent behaviors         As regards to the hyperparameters {, , , , }, we
+of repeated review for the same item.                          adopt a fixed value, i.e.,  = 50/C,  = 0.01,  =
+                                                               50/Z,  = 50/Z, and 0, 1 are set as Section 4.
+5.2 Baselines and parameters
+                                                               5.3 Results
+We compare our CTIM with several state-of-the-art
+baselines. Table 2 lists the features of all methods.          For evaluating performance of all methods, we use two
+                                                               metrics, influence spread and running time.
+   Greedy: This is the original greedy algorithm [3].
+                                                                  We compare the performance of CTIM with four base-
+                                                               lines for two datasets; we analyze the effect of parameters
+                                                               Z (number of topics) and C (number of communi-
+                                                               ties) on the performance of our CTIM for Yelp dataset.
+
+1https://www.yelp.com/                                         Performance comparison The methods of performance
+2https://www.digg.com/                                         comparison are described as follows. First, for fairness,
+Community-based influence maximization for viral marketing
+
+Fig. 3 Performance comparison experiments on Digg dataset
+
+we fix parameters Z = 8 and C = 100 for CTIM and              that these two methods are only different in influence com-
+CTIMCGA, and fix parameter C = 100 for AIR+CGA                putation model, which does affect influence spread hardly
+and CINEMA according the features of the algorithms (see      (consistent with the previous experiments in [19]).
+Table 2). We do not set parameters Z and C for Greedy
+since Greedy is topic-blind and community-blind. Second,         As illustrated in Figs. 2a and 3a, the influence spread
+we evaluate the performance of different algorithms on two    of all the algorithms with topic-aware strategies outperform
+datasets by varying the parameter K from 1 to 50. The         that of algorithms with topic-blind strategy. This is because
+results of performance comparison on Yelp dataset and Digg    topic-aware strategy can improve the accuracy of prediction
+dataset are respectively shown in Figs. 2 and 3.              (verified by previous work [35]). It can also be observed
+                                                              from Figs. 2a and 3a that AIR+CGA outperforms Greedy
+   In Figs. 2a and 3a, we can see that CTIM signifi-          and CINEMA but is inferior to CTIMCGA and CTIM.
+cantly outperforms Greedy, CINEMA and AIR+CGA w.r.t.          This is due to that although AIR+CGA is with topic-aware
+influence spread because we employ a more effective           strategy, simply using Expectation-Maximization method
+topic-aware method, i.e., our comprehensive latent variable   makes it incapable of capturing semantic information and
+model, which takes full advantage of semantic information,    extracting topic distribution well.
+jointly applies influence diffusion modeling and probabilis-
+tic topic modeling, and improves the accuracy of prediction      It is remarkable in Figs. 2b and 3b, that our CTIM is
+largely. As Figs. 2a and 3a shows, the curve of CTIM is       faster than all the baselines by orders of magnitude. The
+almost overlapping with that of CTIMCGA and the reason is     reason is that CTIM integrates the community detection
+                                                              into the influence diffusion modeling that improves the
+
+Fig. 4 Impact of parameter Z on Yelp dataset
+                                                                 H. Huang et al.
+
+Fig. 5 Impact of parameter C on Yelp dataset
+
+efficiency of the algorithm largely and our latent variables     then decreases evidently when C continues to grow. This is
+model is dramatically more efficient than AIR topic diffu-       because when the number of communities increasing (below
+sion model. Specially, CTIM is much faster than CTIMCGA          100), users can be divided into finer-grained communities
+because CTIM is based on MIA influence computation               with more precise influence pattern accordingly, which
+model which is orders of magnitude more efficient than           yields better predicting performance. However, when the
+that of CTIMCGA.                                                 number of communities beyond 100, the error caused by
+                                                                 the difference between influence spread computed within
+Impact of parameter Z We analyze the impact of number            communities and influence spread computed over the whole
+of topics on the performance of our CTIM algorithm by            network increases significantly that results in the reduction
+varying the parameter Z from 2 to 16. We set K = 20              of performance.
+and C = 100. The results are demonstrated in Fig. 4.
+As illustrated in Fig. 4a, when Z varies from 2 to 8,               From Fig. 5b, we observe that the running time of CTIM
+the influence spread improves significantly. And with the        is more sensitive to number of communities than to number
+number of topics increasing, the influence spread of CTIM        of topics. It is because both Algorithm 1 and Algorithm 2
+reaches a plateau. This is possibly because when making          are affected by C, that makes C be more important than
+purchase decisions, users usually do not distinguish topics      Z in the whole process of influence maximization problem
+very punctiliously, thus, the overestimated topics may           resolution.
+generate overfitting problems, without contributing to the
+increase of influence spread. The results in Fig. 4a exactly     6 Conclusions
+testify the robust and insensitiveness of our CTIM to the
+number of latent topics.                                         In this paper, we propose a new influence maximization
+                                                                 method, CTIM, which exploits topic-aware and community-
+   From Fig. 4b, it can be seen that with the increase of        based strategy to improve the performance of influence
+number of topics, the running time of CTIM increases rela-       maximization. A comprehensive latent variable model is
+tively stably. This is due to the fact that only Algorithm 2 is  proposed that can capture item topic relevance and topic
+affected by Z, that takes a relatively small percentage in the   interest across communities, avoiding volatility of individ-
+whole process of influence maximization problem resolu-          ual users and alleviating data-sparsity problem. Besides,
+tion, thus, the increase of Z does not significantly affect the  the proposed model enables integrating the community
+overall performance.                                             detection into the influence diffusion modeling instead
+                                                                 of performing community detection independently, which
+Impact of parameter C We evaluate the sensitiveness of           improves the efficiency of the algorithm largely. We design
+CTIM algorithm to number of communities and the                  a collapsed Gibbs sampling algorithm to infer model param-
+experiment results is as Fig. 5 shows. Note that we set          eters. We propose a community-based heuristic algorithm
+K = 20 and Z = 8. Figure 5a presents when C varies               to mine influential nodes. We evaluate effectiveness and
+from 25 to 100, the influence spread of CTIM improves            efficiency of our proposals by comprehensive experiments.
+significantly, reaches a peak with C increasing to 100, and
+Community-based influence maximization for viral marketing
+
+The experiment results validate our method and show the                 17. Kalish S (1985) A new product adoption model with price,
+superiority of our algorithm compared with state-of-the-art                  advertising, and uncertainty. Manag Sci 31(12):1569­1585
+influence maximization algorithms. As to future work, we
+plan to extend our CTIM algorithm under Linear Threshold                18. Luo ZL, Cai WD, Li YJ (2012) Recent progress in data
+Model. In addition, we plan to explore influence maximiza-                   engineering and internet technology. Springer, Berlin
+tion problem w.r.t. dynamic evolution of social networks.
+                                                                        19. Chen W, Wang C, Wang Y (2010) Scalable influence maximiza-
+Acknowledgements This work is supported by National Key R &                  tion for prevalent viral marketing in large-scale social networks.
+D Program of China Project #2017YFB0203201 and Australian                    In: Proceedings of SIGKDD, pp 1029­1038
+Research Council Discovery Project DP150104871.
+                                                                        20. Cao T, Wu X, Wang S, Hu X (2010) Oasnet: an optimal allocation
+References                                                                   approach to influence maximization in modular social networks.
+                                                                             In: Proceedings of ACM symposium on applied computing,
+ 1. Domingos P, Richardson M (2001) Mining the network value of              pp 1088­1094
+     customers. In: Proceedings of SIGKDD, pp 57­66
+                                                                        21. Clauset A, Newman ME, Moore C (2004) Finding community
+ 2. Richardson M, Domingos P (2002) Mining knowledge-sharing                 structure in very large networks. Phys Rev E 70(6):1­6
+     sites for viral marketing. In: Proceedings of SIGKDD, pp 61­70
+                                                                        22. Wang Y, Cong G, Song G, Xie K (2010) Community-based greedy
+ 3. Kempe D, Kleinberg J, Tardos E (2003) Maximizing the spread of           algorithm for mining top-K influential nodes in mobile social
+     influence through a social network. In: Proceedings of SIGKDD,          networks. In: Proceedings of SIGKDD, pp 1039­1048
+     pp 137­146
+                                                                        23. Chen YC, Zhu WY, Lee WC, Lee S-Y (2014) Cim: community-
+ 4. Galhotra S, Arora A, Roy S (2016) Holistic influence maxi-               based influence maximization in social networks. ACM Trans
+     mization: combining scalability and efficiency with opinion-aware       Intell Syst Technol 5(2):1­25
+     models. In: Proceedings of SIGMOD, pp 743­758
+                                                                        24. Li H, Bhowmick SS, Sun A, Cui J (2015) Conformity- aware
+ 5. Goyal A, Lu W, Lakshmanan LV (2011) CELF++: opti- mizing                 influence maximization in online social networks. VLDB J
+     the greedy algorithm for influence maximization in social               24(1):117­141
+     networks. In: Proceedings of WWW, pp 47­48
+                                                                        25. Blei DM, Ng AY, Jordan MI (2003) Latent dirichlet allocation. J
+ 6. Kundu S, Murthy C, Pal SK (2011) A new centrality measure                Mach Learn Res Arch 3:993­1022
+     for influence maximization in social networks. In: Proceedings
+     of international conference on pattern recognition and machine     26. Yan X, Guo J, Lan Y, Cheng X (2013) A biterm topic model for
+     intelligence, pp 242­247                                                short texts. In: Proceedings of international conference on World
+                                                                             Wide Web, pp 1445­1456
+ 7. Leskovec J, Krause A, Guestrin C, Faloutsos C, Van Briesen J,
+     Glance N (2007) Cost-effective outbreak detection in networks.     27. Yin J, Wang J (2014) A dirichlet multinomial mixture model-
+     In: Proceedings of SIGKDD, pp 420­429                                   based approach for short text clustering. In: Proceedings of
+                                                                             SIGKDD, pp 233­242
+ 8. Cheng S, Shen H, Huang J (2012) StaticGreedy: solving the
+     scalability-accuracy dilemma in influence maximization. In:        28. Yang Z, Kotov A, Mohan A, Lu S (2015) Parametric and non-
+     Proceedings of ACM international conference on information and          parametric user-aware sentiment topic models. In: Proceedings of
+     knowledge management, pp 509­518                                        SIGIR, pp 413­422
+
+ 9. Tang Y, Shi Y, Xiao X (2015) Influence maximization in near-        29. Iwata T, Yamada T, Sakurai Y, Ueda N (2010) Online multiscale
+     linear time: a martingale approach. In: Proceedings of SIGMOD,          dynamic topic models. In: Proceedings of SIGKDD, pp 663­672
+     pp 1593­1554
+                                                                        30. Liang S, Yilmaz E, Kanoulas E (2016) Dynamic clustering of
+10. Tang Y, Xiao X, Shi Y (2014) Influence maximization:                     streaming short documents. In: Proceedings of SIGKDD, pp 995­
+     near-optimal time complexity meets practical efficiency. In:            1004
+     Proceedings of SIGMOD, pp 75­86
+                                                                        31. Zhao Y, Liang S, Ren Z, Ma J, Yilmaz E, Rijke MD (2016)
+11. Chen W, Wang Y, Yang S (2009) Efficient influence maxi-                  Explainable user clustering in short text streams. In: Proceedings
+     mization in social networks. In: Proceedings of SIGKDD, pp 199­         of SIGIR, pp 155­164
+     208
+                                                                        32. Cha Y, Cho J (2012) Social-network analysis using topic models.
+12. Wang Y, Feng X (2009) A potential-based node selection                   In: Proceedings of SIGIR, pp 565­574
+     strategy for influence maximization in a social network. In:
+     Proceedings of international conference on advanced data mining    33. Guo W, Wu S, Wang L, Tan T (2015) Social-relational topic model
+     and applications, pp 350­361                                            for social networks. In: Proceedings of CIKM, pp 1731­1734
+
+13. Su J, Havens TC (2015) Quadratic program-based modularity           34. Bi B, Tian Y, Balmin A, Balmin A, Cho J (2014) Scalable
+     maximization for fuzzy community detection in social networks.          topic-specific influence analysis on microblogs. In: Proceedings
+     IEEE Trans Fuzzy Syst 23(5):1356­1371                                   of WSDM, pp 513­522
+
+14. Yang J, McAuley J, Leskovec J (2013) Community detection in         35. Barbieri N, Bonchi F, Manco G (2012) Topic-aware social
+     networks with node attributes. In: Proceedings of ICDM, pp 1151­        influence propagation models. In: Proceedings of ICDM, pp 81­90
+     1156
+                                                                        36. Chen W, Wei L, Zhang N (2012) Time-critical influence
+15. Li J, Hu X, Jian L, Liu H (2017) Toward time-evolving feature            maximization in social networks with time-delayed diffusion
+     selection on dynamic networks. In: Proceedings of ICDM,                 process. In: Proceedings of AAAI, pp 592­598
+     pp 1003­1008
+                                                                        37. Hu Z, Yao J, Cui B, Xing E (2015) Community level diffusion
+16. Fang Y, Cheng R, Luo S, Hu J (2016) Effective community search           extraction. In: Proceedings of SIGMOD, pp 1555­1569
+     for large attributed graphs. Proc VLDB Endow 9(12):1233­1244
+                                                                        38. Zhang Y, Lyu T, Zhang Y (2017) Hierarchical community-
+                                                                             level information diffusion modeling in social networks. In:
+                                                                             Proceedings of SIGIR, pp 753­762
+
+                                                                        39. Liu L, Tang J, Han J, Jiang M, Yang S (2010) Mining topic-level
+                                                                             influecne in heterogeneous networks. In: Proceedings of CIKM,
+                                                                             Toronto, pp 199­208
+
+                                                                        40. Heinrich G (2008) Parameter estimation for text analysis.
+                                                                             Technical Report, pp 1­32
+
+                                                                        41. Zhang Y, Chen H, Lu J, Zhang G (2017) Detecting and predicting
+                                                                             the topic change of knowledge-based systems: a topic-based
+                                                                        H. Huang et al.
+
+     bibliometric analysis from 1991 to 2016. Knowl.Based Syst               Information systems architecture and technology: proceedings
+     133:255­268                                                             of 38th international conference on information systems archi-
+42. Della Rocca P, Senatore S, Loia V (2017) A semantic-grained              tecture and technology - ISAT 2017. ISAT 2017. Advances
+     perspective of latent knowledge modeling. Inf Fusion 36:52­67           in intelligent systems and computing, vol 656. Springer,
+43. Rizun N, Ossowska K, Taranenko Y (2018) Modeling the cus-                Cham
+     tomer's contextual expectations based on latent semantic analysis  44. Wang Z, Gu S, Xu X (2018) GSLDA: LDA-based group
+     algorithms. In: S´ wiatek J, Borzemski L, Wilimowska Z (eds)            spamming detection in product reviews. Appl Intell 48:3094
+

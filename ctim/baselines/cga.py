@@ -479,7 +479,7 @@ def _induced_community_adjacency(comm, ds, pp, n_comm):
 
 
 def cga_select_seeds(comm, ds, pp, K, rng, n_mc=200, *,
-                     dp_tiebreak="consistent", h=0.1, evaluate=True,
+                     dp_tiebreak="paper-true", h=0.1, evaluate=True,
                      method="CGA", extra=None):
     """CGA (Wang et al. [22]): DP seed allocation + MixedGreedy per community.
 
@@ -490,17 +490,19 @@ def cga_select_seeds(comm, ds, pp, K, rng, n_mc=200, *,
     `rng`   -- explicit random.Random.
 
     Implements SPEC.md Section 6, Algorithm 2 lines 25-45 verbatim, with
-    MixedGreedy supplying I_m instead of MIA.  `dp_tiebreak` selects between the
-    two readings of line 36 documented in SPEC reading note 1:
-        "consistent"    -> I[m][k-1] + dI_m >= I[m-1][k]   (matches line 35)
-        "paper-literal" -> I[C][k-1] + dI_m >= I[m-1][k]   (as printed)
+    MixedGreedy supplying I_m instead of MIA.  `dp_tiebreak` selects the reading
+    of lines 35/36 (DEVIATIONS.md 1.1):
+        "paper-true"    -> both lines reference I[C][k-1]  (as printed, default)
+        "consistent"    -> both lines reference I[m][k-1]
+        "paper-literal" -> line 35 I[m][k-1], line 36 I[C][k-1]
 
     Returns a RunResult.  `seconds` is the wall-clock cost of *selection only*;
     the Eq (18) evaluation is timed separately into `extra["eval_seconds"]` so
     the running-time figures compare like with like.
     """
-    if dp_tiebreak not in ("consistent", "paper-literal"):
-        raise ValueError("dp_tiebreak must be 'consistent' or 'paper-literal'")
+    if dp_tiebreak not in ("paper-true", "consistent", "paper-literal"):
+        raise ValueError("dp_tiebreak must be 'paper-true', 'consistent' or "
+                         "'paper-literal'")
 
     t_start = time.perf_counter()
 
@@ -541,15 +543,17 @@ def cga_select_seeds(comm, ds, pp, K, rng, n_mc=200, *,
             # re-reading it here costs nothing.
             dI_m = best_gain[m - 1]
 
-            take = I[m][k - 1] + dI_m
+            # Algorithm 2, line 35.  As printed the reference is I[C,k-1]
+            # (DEVIATIONS.md 1.1); the historical modes keep I[m,k-1].
+            ref35 = I[C][k - 1] if dp_tiebreak == "paper-true" else I[m][k - 1]
+            take = ref35 + dI_m
             skip = I[m - 1][k]
-            # Algorithm 2, line 35
             I[m][k] = take if take > skip else skip
 
-            # Algorithm 2, lines 36-40.  SPEC reading note 1: line 36 as printed
-            # compares against I[C,k-1] while line 35 maximises over I[m,k-1];
-            # "consistent" repairs that, "paper-literal" reproduces it.
-            probe = take if dp_tiebreak == "consistent" else (I[C][k - 1] + dI_m)
+            # Algorithm 2, lines 36-40.  Only "consistent" departs from the
+            # printed I[C,k-1] here, to match its own line 35.
+            probe = (I[m][k - 1] + dI_m) if dp_tiebreak == "consistent" \
+                else (I[C][k - 1] + dI_m)
             s[m][k] = m if probe >= skip else s[m - 1][k]
             n_dp_cells += 1
 
@@ -630,7 +634,7 @@ select_seeds = cga_select_seeds
 
 
 def ctim_cga_select(model, ds, item, K, rng, n_mc=200, *,
-                    h=0.1, dp_tiebreak="consistent", top_c=0):
+                    h=0.1, dp_tiebreak="paper-true", top_c=0):
     """CTIM_CGA (SPEC.md Section 7): CTIM's model + CGA's selection.
 
     Pipeline, mirroring Algorithm 2 lines 1-24 exactly as CTIM does:

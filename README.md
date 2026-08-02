@@ -184,7 +184,7 @@ python3 scripts/run_experiments.py --dataset data/processed/synthetic_small \
 
 Useful flags: `--methods`, `--K-list`, `--n-test-items`, `--n-mc`,
 `--gibbs-iters-topic`, `--gibbs-iters-comm`, `--sampler {exact,mh}`,
-`--dp-tiebreak {consistent,paper-literal}`, `--h`, `--delta`,
+`--dp-tiebreak {paper-true,consistent,paper-literal}`, `--h`, `--delta`,
 `--max-logs-per-item`, `--z-grid`, `--c-grid`, `--verbose`.
 `python3 scripts/run_experiments.py --help` lists them all.
 

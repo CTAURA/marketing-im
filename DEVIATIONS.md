@@ -18,26 +18,103 @@ Severity key:
 
 ## 1. Ambiguities and errors in the printed algorithm
 
-### 1.1 **[SPEC]** Algorithm 2 line 36 contradicts line 35 — severity A
+### 1.1 **[SPEC]** Algorithm 2 line 35 was mis-transcribed — severity A (CORRECTED)
 
-Line 35 takes `I[m,k] = max(I[m−1,k], I[m,k−1] + dI_m)` but line 36 tests
-`I[C,k−1] + dI_m ≥ I[m−1,k]`. The back-pointer `s[m,k]` therefore does **not**
-record which branch of the max on line 35 actually won: line 35 compares against
-`I[m,k−1]` while line 36 compares against `I[C,k−1]`. As printed, the DP's
-reconstruction step can point at a community that the value recursion never
-credited. This is an internal inconsistency in the paper, not a reading
-difficulty.
+**Earlier revisions of this file and of SPEC.md were wrong.** They claimed the
+paper's lines 35 and 36 contradict each other. They do not.
 
-**What we do.** Both readings are implemented and selectable:
+**Provenance of this correction.** Pages 6 and 9 of `viral_marketing.pdf` carry
+**no text layer at all** — `pdftotext -bbox` returns zero words for both, because
+Algorithm 1 and Algorithm 2 are images. No extraction mode can recover them, so
+the transcription below was read off the *rendered* page. Anyone re-checking
+Algorithm 1 or 2 must do the same; text-dump-based audits structurally cannot.
 
-* `dp_tiebreak="consistent"` (**default**) — line 36 reads `I[m,k−1]`, so `s`
-  always records the branch line 35 took.
-* `dp_tiebreak="paper-literal"` — line 36 reads `I[C,k−1]` exactly as printed.
+The paper (page 9 of `viral_marketing.pdf`) prints:
 
-`ctim/ctim.py:465`; mirrored in `ctim/baselines/cga.py:549` and
-`ctim/baselines/air_cga.py:966`. Both are exercised by
+```
+35:  I[m,k] = max( I[m-1,k],  I[C,k-1] + dI_m );
+36:  if     I[C,k-1] + dI_m >= I[m-1,k]  then
+```
+
+Both lines read `I[C,k-1]`. SPEC.md Section 6 — under the heading "Verbatim from
+the paper" — transcribed line 35 as `I[m,k-1] + dI_m`. That single character
+error produced three downstream consequences, all now fixed:
+
+1. This entry previously asserted an internal inconsistency in the paper. There
+   is none; the recurrence is coherent as printed.
+2. `ctim/ctim.py` implemented line 35 as `Iv[m][k-1] + dI_m` in **both**
+   `dp_tiebreak` modes, so neither mode reproduced the printed recurrence, and
+   the mode named `"paper-literal"` was not literal — it made only line 36 match.
+3. The from-scratch oracle in `tests/test_ctim.py` repeated the same reading, so
+   it was not independent of SPEC.md and the test suite could not detect any of
+   this.
+
+**What the printed recurrence means.** `I[C,k-1]` does not depend on `m`, so
+unrolling line 35 across `m = 1..C` collapses the table:
+
+```
+I[C,k] = max_m ( I[C,k-1] + dI_m ) = I[C,k-1] + max_m dI_m
+s[C,k] = argmax_m dI_m
+```
+
+The "dynamic program" therefore reduces to plain greedy over communities: each
+round, take a seed from whichever community currently offers the largest
+marginal gain. That matches the paper's own prose ("we propose to use dynamic
+programming to choose which community the k-th seed node should come from", "As
+CGA Algorithm in [22]") and matches CGA's formulation.
+
+**What we do.** Three readings are selectable; the paper's is the default:
+
+| `dp_tiebreak` | line 35 reference | line 36 reference |
+|---|---|---|
+| `"paper-true"` (**default**) | `I[C,k-1]` | `I[C,k-1]` |
+| `"consistent"` | `I[m,k-1]` | `I[m,k-1]` |
+| `"paper-literal"` | `I[m,k-1]` | `I[C,k-1]` |
+
+`ctim/ctim.py:465`; mirrored in `ctim/baselines/cga.py` and
+`ctim/baselines/air_cga.py`. All three are exercised by
 `tests/test_ctim.py::TestDeterminismAndTiebreaks` and recorded in
 `RunResult.extra["dp_tiebreak"]`, so the choice is always visible in results.
+
+**Measured impact of the correction** (`scripts/check_line35.py`, real Digg,
+`C=100 Z=8 K=20 h=0.1`):
+
+| line-35 reading | `I(S)` Eq (18) | reported DP value |
+|---|---|---|
+| `paper-true` | 761.4040 | 181.1065 |
+| `consistent` | 761.4040 | 169.9614 |
+| `paper-literal` | 761.4040 | 169.9614 |
+
+The final seed **set** is identical across all three (20/20 shared) and the
+influence spread is unchanged, so no published figure moves. Only the selection
+*order* and the reported `dp_value` differ. The `paper-true` DP value is the one
+that is actually meaningful: 181.1065 equals the achieved sum of within-community
+spreads (`I_39(10) + I_52(10)`), whereas the `consistent` table no longer tracks
+the quantity it is maximising.
+
+The seed set is insensitive here only because 98 of 100 communities carry no
+internal propagation on this benchmark (see Section 7.1), leaving the allocation
+with just two real options. On a graph with many live communities the readings
+do diverge — the planted-community fixture in `ctim/ctim.py`'s self-test
+(3 communities, all live) gives:
+
+| reading | seeds | `I(S)` Eq (18) | DP value |
+|---|---|---|---|
+| `paper-true` | `[5, 39, 26, 7, 53]` | 12.3879 | 8.1352 |
+| `consistent` | `[5, 39, 6, 4, 26]` | 12.9962 | 7.6714 |
+| `paper-literal` | `[5, 39, 6, 4, 26]` | 12.9962 | 7.6714 |
+
+**The faithful reading scores 4.7% *lower* global spread on that fixture.** That
+is expected and is not an argument against it: the paper's line 35 collapses to
+greedy over communities, which is not optimal, and this repository's purpose is
+to reproduce the paper rather than to improve on it. The `consistent` mode
+remains available for anyone who wants the better-performing variant, and the
+mode is always recorded in `RunResult.extra["dp_tiebreak"]`.
+
+Note the two columns move in opposite directions: `paper-true` has the higher DP
+value but the lower Eq (18) spread. That is the objective mismatch of DEVIATIONS
+1.2/1.3 showing through — the DP maximises the sum of *within-community* spreads
+`I_m`, while the reported metric is the *global* `I` on the full graph.
 
 ### 1.2 **[SPEC]** Line 34: `I_m` is not defined in the paper — severity C
 
@@ -216,6 +293,64 @@ All are disabled by default and flagged in `RunResult.extra` when used:
 | `build_potential_influence_logs(max_per_item=n)` | uniform reservoir subsample of `D` per item | reported by the harness |
 | `cinema_select_seeds(cand_top=n)` | restricts candidates to the top-degree nodes per community | `extra["approximate"]` |
 | dataset preparer `--target-users/-links/-items` | subsamples the raw graph | `meta.json["notes"]` |
+
+### 4.5 AIR+CGA used to drop `dp_tiebreak` on the executing path — severity C (FIXED)
+
+`air_cga_select_seeds` recorded the requested reading in
+`extra["dp_tiebreak"]` and forwarded it to `cga_select_seeds_local`, but
+`_resolve_cga_selector()` prefers the sibling `ctim.baselines.cga.cga_select_seeds`,
+which always imports in this repository — so the local branch was dead and the
+call site passed six positional arguments only. `dp_tiebreak` being keyword-only
+on the sibling, it was silently dropped: a `--dp-tiebreak` run had CTIM and
+CTIM_CGA honouring the flag while AIR+CGA ran its own default and *reported the
+flag it had ignored*.
+
+Fixed by offering the keyword and withdrawing it on `TypeError`, since API.md
+fixes only the six-positional signature and says nothing about keyword extras.
+Verified by spying on the sibling: all three readings now arrive.
+
+No published number changes — every shipped run used the default, where both
+sides agreed.
+
+### 4.6 AIR+CGA detects communities with CNM, not with CGA's own detector — severity B
+
+The paper (p.10) defines the baseline as "topic diffusion model AIR [35] with
+community detection **and** seed-set selection of CGA". This repository supplies
+CGA's *selection* (the Algorithm 2 DP plus MixedGreedy) but substitutes
+**greedy modularity agglomeration (Clauset–Newman–Moore)** for CGA's detection:
+`ctim/experiments.py:684` calls `detect_communities_modularity`, and
+`cga_select_seeds` only ever receives a partition from its caller — CGA's own
+detector is implemented nowhere in the repository.
+
+The paper distinguishes the two explicitly. On p.8 it calls CGA's detector
+"a two-step community detection algorithm ... the time complexity of which is
+non-trivial", and on p.3 it attributes CNM [21] to OASNET [20], a *different*
+method. So the substitution is not a reading of the paper; it is a stand-in.
+
+This matters for the efficiency claim, not the spread claim: the paper's Fig 2b/3b
+story rests on CGA-family baselines paying a detection cost CTIM avoids by folding
+detection into Algorithm 1. A cheaper detector understates that cost and therefore
+*flatters the baseline*, not CTIM. Wang et al. [22] is not available in this
+environment, so implementing CGA's two-step detector faithfully was not possible.
+
+### 4.7 Two non-paper modules ship inside the package — severity C
+
+* `ctim/ea_dp.py` — an evolutionary-algorithm variant of the within-community
+  search plus an exact `O(C K^2)` resource-allocation DP,
+  `I[m,k] = max_{0<=j<=min(k,cap_m)} ( I[m-1,k-j] + I_m(j) )`. This is **not**
+  Algorithm 2 line 35 and is not claimed to be. Reachable only from
+  `scripts/run_ea_dp.py`; no results path imports it. Measured on real Digg it
+  changes nothing (identical seed set and spread to Algorithm 2), which is why
+  it stays a side experiment.
+* `scripts/calibrate_h.py` — diagnostics for the Eq (15) threshold and for the
+  learned parameters (normalised entropy of `theta`/`psi`/`pi`, MIP distance
+  distribution, `I_h(S)` saturation). Entropy is not a paper quantity; it is an
+  instrument for testing whether the model learned anything. Measured
+  conclusion: on Digg at `C=100, Z=8`, `h=0.1` already captures 96.0 % of the
+  saturated influence, so moving `h` buys ~4 % spread for 15-97x the evaluation
+  cost — the threshold is **not** the bottleneck. See Section 7.1.
+
+Neither is on any figure's code path, so no reported number depends on them.
 
 ---
 

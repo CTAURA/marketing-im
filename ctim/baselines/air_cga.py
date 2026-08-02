@@ -964,7 +964,7 @@ class _CommunityMixedGreedy:
 
 
 def cga_select_seeds_local(comm, ds, pp, K, rng, n_mc=1000,
-                           dp_tiebreak="consistent", n_mc_first=None):
+                           dp_tiebreak="paper-true", n_mc_first=None):
     """CGA [22] seed selection: DP allocation across communities + MixedGreedy.
 
     Local fallback used only when ``ctim.baselines.cga.cga_select_seeds`` is not
@@ -975,14 +975,15 @@ def cga_select_seeds_local(comm, ds, pp, K, rng, n_mc=1000,
     DP verbatim: ``I[m][k] = max(I[m-1][k], I[m][k-1] + dI_m)``, allocating one
     seed per round ``k`` to whichever community the DP's argmax chain points at.
 
-    ``dp_tiebreak``:
-      * ``"consistent"``   -- line 36 compares ``I[m][k-1] + dI_m >= I[m-1][k]``,
-        matching the max actually taken on line 35 (SPEC.md reading note 1);
-      * ``"paper-literal"`` -- line 36 exactly as printed, ``I[C][k-1] + dI_m``.
+    ``dp_tiebreak`` -- which reading of Algorithm 2 lines 35/36 to run
+    (DEVIATIONS.md 1.1):
+      * ``"paper-true"``    -- both lines read ``I[C][k-1]``, as printed;
+      * ``"consistent"``    -- both lines read ``I[m][k-1]``;
+      * ``"paper-literal"`` -- line 35 reads ``I[m][k-1]``, line 36 ``I[C][k-1]``.
     """
-    if dp_tiebreak not in ("consistent", "paper-literal"):
-        raise ValueError("dp_tiebreak must be 'consistent' or 'paper-literal', "
-                         "got %r" % (dp_tiebreak,))
+    if dp_tiebreak not in ("paper-true", "consistent", "paper-literal"):
+        raise ValueError("dp_tiebreak must be 'paper-true', 'consistent' or "
+                         "'paper-literal', got %r" % (dp_tiebreak,))
     if K <= 0:
         return []
 
@@ -1011,14 +1012,15 @@ def cga_select_seeds_local(comm, ds, pp, K, rng, n_mc=1000,
         for m in range(1, C + 1):  # Algorithm 2, line 33
             # Algorithm 2, line 34: dI_m = max_{u in c_m} I_m(S u u) - I_m(S)
             _u, dI = states[m - 1].best_gain()
-            cand = Itab[m][k - 1] + dI
-            # Algorithm 2, line 35
+            # Algorithm 2, line 35.  As printed the reference is I[C,k-1].
+            ref35 = Itab[C][k - 1] if dp_tiebreak == "paper-true" else Itab[m][k - 1]
+            cand = ref35 + dI
             Itab[m][k] = cand if cand > Itab[m - 1][k] else Itab[m - 1][k]
             # Algorithm 2, line 36
             if dp_tiebreak == "consistent":
-                lhs = cand
+                lhs = Itab[m][k - 1] + dI
             else:
-                lhs = Itab[C][k - 1] + dI  # the literal printed form
+                lhs = Itab[C][k - 1] + dI  # the printed form
             if lhs >= Itab[m - 1][k]:
                 stab[m][k] = m  # Algorithm 2, line 37
             else:
@@ -1127,7 +1129,7 @@ def air_cga_select_seeds(ds, logs_train, item, K, rng,
                          Z=8, C=100, n_mc=1000,
                          n_em_iter=50, em_tol=1e-6,
                          n_neg_per_pos=3, max_neg_per_item=0,
-                         h=0.1, dp_tiebreak="consistent",
+                         h=0.1, dp_tiebreak="paper-true",
                          air=None, comm=None, evaluator=None,
                          community_detector=None, cga_selector=None,
                          n_mc_first=None, strict=False, verbose=False):
@@ -1239,8 +1241,17 @@ def air_cga_select_seeds(ds, logs_train, item, K, rng,
                                            dp_tiebreak=dp_tiebreak,
                                            n_mc_first=n_mc_first)
         else:
-            # API.md fixes this signature: cga_select_seeds(comm, ds, pp, K, rng, n_mc)
-            seeds = sel(comm, ds, pp, K, rng, n_mc)
+            # API.md fixes the positional signature
+            # cga_select_seeds(comm, ds, pp, K, rng, n_mc) but says nothing about
+            # keyword-only extras, so `dp_tiebreak` is offered and withdrawn if
+            # the sibling does not accept it.  Passing it matters: without this
+            # the flag was recorded in `extra["dp_tiebreak"]` while the sibling
+            # silently ran its own default, so a `--dp-tiebreak` run mislabelled
+            # AIR+CGA (DEVIATIONS.md 4.5).
+            try:
+                seeds = sel(comm, ds, pp, K, rng, n_mc, dp_tiebreak=dp_tiebreak)
+            except TypeError:
+                seeds = sel(comm, ds, pp, K, rng, n_mc)
             if hasattr(seeds, "seeds"):  # sibling may return a RunResult
                 seeds = list(seeds.seeds)
     except Exception as exc:
