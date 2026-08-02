@@ -350,6 +350,31 @@ environment, so implementing CGA's two-step detector faithfully was not possible
   saturated influence, so moving `h` buys ~4 % spread for 15-97x the evaluation
   cost — the threshold is **not** the bottleneck. See Section 7.1.
 
+* `ctim/ris_imm.py` — IMM (Tang et al., SIGMOD 2015) over reverse influence
+  sampling (Borgs et al., SODA 2014), as an alternative to Algorithm 2's
+  selection. It applies **no** threshold, so it optimises the untruncated IC
+  spread. Reachable only from `scripts/run_ris_imm.py`.
+
+  Its measurement is the sharpest evidence in this file about `h`. On real Digg
+  at `K = 20`, scored by two independent evaluators (MC-IC is 5 replicates of
+  3,000 simulations; the gap is ~148 standard deviations, not noise):
+
+  | method | MIA Eq (18), `h=0.1` | Monte-Carlo IC | select |
+  |---|---|---|---|
+  | CTIM | **761.40** | 924.81 ± 0.25 | 4.2 s |
+  | IMM | 32.53 | **961.83 ± 0.15** | 39.4 s |
+  | GlobalGreedy | 763.89 | 917.27 ± 0.26 | 50.2 s |
+
+  **The two evaluators rank the methods in opposite order**, and IMM shares only
+  1 of 20 seeds with CTIM. MIA under-estimates the true IC spread of CTIM's own
+  seeds by 18 %, but of IMM's seeds by **96.6 %** — the approximation error is
+  strongly seed-dependent, and it is smallest for exactly the seeds MIA itself
+  would choose. At `h = 0.1` MIA admits only single-hop paths, so multi-hop
+  cascade value is invisible to it; the live-edge samples show the graph does
+  carry such cascades (mean RR-set size 42.7). Under the paper's own definition
+  of influence spread (Eq (18)) CTIM wins; under the Kempe et al. IC definition
+  the ordering reverses.
+
 Neither is on any figure's code path, so no reported number depends on them.
 
 ---
@@ -636,6 +661,61 @@ and at several explicit `C` targets):
 Note this is a pure performance fix, not an algorithmic one: no merge decision
 changes, and the two detectors remain independent of the diffusion model, which
 SPEC.md Section 7 makes the defining weakness of these baselines vs CTIM.
+
+## 7.5 `theta` is prior-dominated, not under-trained — measured per sweep
+
+Section 7.1 attributed the Eq (12) scale problem to under-training plus an
+over-large `C`. That is right about `max pp` (0.095 at 8 sweeps → 0.1245 at 30),
+but it does **not** explain why `theta` is uniform, and the two were conflated.
+`scripts/trace_entropy.py` separates them by recording
+
+    H^(t) = -sum_{i=1..K} p_i^(t) log p_i^(t)
+
+after **every Gibbs sweep**, for each learned matrix. A single averaged `Hbar`
+cannot distinguish "has not moved yet" from "converged onto the prior"; the
+trajectory can. Judged as a fraction of the ceiling `ln K` (Digg, `C=100 Z=8`,
+30 sweeps per stage, `mh` sampler):
+
+| matrix | prior mass | tokens per row | gap at sweep 0 | gap at sweep 30 | % below uniform | verdict |
+|---|---|---|---|---|---|---|
+| `psi[z][f]` | **0.62** (`beta=0.01`) | many | 4.6e-01 | 1.15e+00 | **27.9 %** | still separating |
+| `pi[v][c]` | 50 (`rho=50/C`) | median **3** | 5.2e-02 | 7.97e-02 | 1.7 % | still separating |
+| `phi[i][z]` | 50 (`omega=50/Z`) | **6.97** | 7.4e-03 | 7.99e-03 | **0.384 %** | prior-dominated |
+| `theta[c][z]` | 50 (`alpha=50/Z`) | inherits `P(z\|i)` | 1.8e-05 | 4.09e-05 | **0.002 %** | prior-dominated |
+
+`theta` sits 0.002 % below the uniform ceiling **at sweep 0 and still at sweep
+30**. It never leaves the prior. No number of sweeps can change that, which
+settles the question 7.1 left open.
+
+The mechanism is arithmetic, not statistical. Every `50/X` prior places a fixed
+*total* Dirichlet mass of 50 regardless of `C` or `Z`, so
+
+    phi_i[z] = (n_iz + 6.25) / (n_i + 50),   n_i = 6.97 attribute tokens
+
+is at most `(6.97 + 6.25) / (6.97 + 50) = 0.232` even if **every** token of an
+item lands on one topic — against a uniform of 0.125. `P(z|i)` therefore cannot
+carry topic information, and since `n_cz = sum_i M n_ci P(z|i)`, a uniform
+`P(z|i)` forces `n_cz = n_c/Z` **exactly, at any data volume**. `theta` is
+uniform by construction.
+
+`psi` is the control that proves this is about the priors rather than the data:
+it is the one matrix whose prior is an absolute `beta = 0.01` (total mass 0.62,
+not 50), and it is the one matrix that learns strongly.
+
+**Consequences for the remedies.**
+
+* More Gibbs sweeps help `psi` and `pi` — both are still separating at sweep 30,
+  so the `--quick` profile genuinely under-trains those two. They do **nothing**
+  for `phi`/`theta`.
+* Uncapping `max_logs_per_item` (Section 7.3) raises `n_v` and so helps `pi`. It
+  cannot help `theta`, for the `n_cz = n_c/Z` reason above.
+* The only lever on `theta` is **more attribute tokens per item**. Digg's item
+  attributes are derived anyway (Section 5.6), so their count is a preparation
+  choice, not a property of the data: `prepare_data.py digg --n-hash-attrs N`.
+  At `n_i = 100` tokens, `phi_i[z]` can reach 0.708.
+
+Reproduce with `python3 scripts/trace_entropy.py` (~275 s; stage 2 dominates
+because `pi()` is a `U x C` read per snapshot — use `--snap-every 2` or higher).
 
 ## 8. Test-suite scope
 

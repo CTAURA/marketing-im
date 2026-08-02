@@ -51,6 +51,7 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
+from ctim.entropy import mean_entropy                                    # noqa: E402
 from ctim.experiments import Experiment, ExperimentConfig, quick_config  # noqa: E402
 from ctim.influence import MIA, EdgeWeights                              # noqa: E402
 
@@ -71,25 +72,6 @@ def quantiles(xs, qs):
         idx = min(n - 1, max(0, int(math.ceil(q * n)) - 1))
         out.append(s[idx])
     return out
-
-
-def norm_entropy(row):
-    """Shannon entropy of a distribution, divided by ln(len) -> [0, 1].
-
-    1.0 means uniform (no information); 0.0 means a point mass.
-    """
-    n = len(row)
-    if n <= 1:
-        return 0.0
-    tot = sum(row)
-    if tot <= 0.0:
-        return 1.0
-    h = 0.0
-    for p in row:
-        p = p / tot
-        if p > 0.0:
-            h -= p * math.log(p)
-    return h / math.log(n)
 
 
 def mean(xs):
@@ -174,35 +156,43 @@ def phase_model(model, Z, C):
     print("PHASE 1 -- model diagnostics (is there any topic signal to find?)")
     print("=" * 74)
 
-    theta = model.theta            # theta[c][z], Algorithm 1 line 9
-    psi = getattr(model, "psi", None)
-    pi = model.pi                  # pi[v][c], Eq (7)
+    # Hbar = (1/T) sum_t H^(t),  H^(t) = -sum_{i=1..K} p_i log p_i  (ctim.entropy)
+    blocks = [
+        ("phi[i][z]  ", getattr(model, "phi", None), "items", "topics"),
+        ("p_z_given_i", getattr(model, "p_z_given_i", None), "items", "topics"),
+        ("theta[c][z]", model.theta, "communities", "topics"),
+        ("psi[z][f]  ", getattr(model, "psi", None), "topics", "attributes"),
+        ("pi[v][c]   ", model.pi, "users", "communities"),
+    ]
 
-    th_H = [norm_entropy(r) for r in theta]
-    th_max = [max(r) for r in theta]
-    print("theta[c][z]  (C=%d rows over Z=%d topics)" % (len(theta), Z))
-    print("  normalised entropy  mean %.4f   min %.4f   max %.4f"
-          % (mean(th_H), min(th_H), max(th_H)))
-    print("  max_z theta[c][z]   mean %.4f   max %.4f   (uniform = %.4f)"
-          % (mean(th_max), max(th_max), 1.0 / Z))
-    print("  --> Eq (12) is bounded above by max_{c,z} theta = %.4f" % max(th_max))
+    print("  Hbar = (1/T) sum_t H^(t),   H^(t) = -sum_{i=1..K} p_i^(t) log p_i^(t)")
+    print("  raw Hbar is in [0, ln K]; normalised is Hbar/ln K in [0, 1],")
+    print("  where 1.0 = uniform = the prior was never overcome = nothing learned.\n")
+    print("  %-12s %6s %5s %10s %10s %10s   %10s %10s"
+          % ("matrix", "T", "K", "Hbar", "ln K", "Hbar/lnK", "mean max_i", "uniform"))
 
-    if psi:
-        ps_H = [norm_entropy(r) for r in psi]
-        print("psi[z][f]    (Z=%d rows over F=%d attributes)" % (len(psi), len(psi[0])))
-        print("  normalised entropy  mean %.4f   min %.4f   max %.4f"
-              % (mean(ps_H), min(ps_H), max(ps_H)))
+    out = {}
+    for name, mat, t_unit, k_unit in blocks:
+        if not mat:
+            continue
+        raw = mean_entropy(mat)                      # the printed formula
+        nrm = mean_entropy(mat, normalized=True)     # comparable across K
+        mx = [max(r) / sum(r) for r in mat if sum(r) > 0]
+        print("  %-12s %6d %5d %10.5f %10.5f %10.5f   %10.5f %10.5f"
+              % (name, raw.T, raw.K, raw.mean, raw.max_possible, nrm.mean,
+                 mean(mx), 1.0 / raw.K))
+        out[name.strip()] = {"Hbar": raw.mean, "Hbar_norm": nrm.mean,
+                             "T": raw.T, "K": raw.K, "mean_max": mean(mx)}
 
-    pi_max = [max(r) for r in pi]
-    pi_H = [norm_entropy(r) for r in pi]
-    print("pi[v][c]     (U=%d rows over C=%d communities)" % (len(pi), C))
-    print("  normalised entropy  mean %.4f" % mean(pi_H))
-    print("  max_c pi[v][c]      mean %.4f   (uniform = %.4f, ratio %.2fx)"
-          % (mean(pi_max), 1.0 / C, mean(pi_max) * C))
+    th_max = [max(r) for r in model.theta]
+    print("\n  --> Eq (12) is bounded above by max_{c,z} theta = %.4f  (1/Z = %.4f)"
+          % (max(th_max), 1.0 / Z))
+    print("  --> rows read (T) x components (K); psi is the control: it is the one")
+    print("      matrix whose prior is an absolute 0.01 rather than a mass-50 50/X.")
 
     print("[phase 1] %s" % fmt_secs(time.perf_counter() - t0))
-    return {"theta_max": max(th_max), "theta_H": mean(th_H),
-            "pi_max_mean": mean(pi_max)}
+    out["theta_max"] = max(th_max)
+    return out
 
 
 # ---------------------------------------------------------------------------
