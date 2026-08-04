@@ -78,7 +78,31 @@ class Hyper:
     warning: str = ""
 
     @staticmethod
-    def make(C, Z, n_users, n_links, n_logs, zeta=1.0):
+    def make(C, Z, n_users, n_links, n_logs, zeta=1.0,
+             alpha_abs=None, omega_abs=None):
+        """Build the paper's hyperparameters; ``alpha_abs``/``omega_abs`` are an
+        optional, opt-in deviation.
+
+        With both left at ``None`` (the default) this reproduces the paper
+        exactly: ``rho = 50/C, alpha = 50/Z, beta = 0.01, omega = 50/Z``.
+
+        DOCUMENTED DEVIATION (opt-in only).  The paper's ``alpha = 50/Z`` and
+        ``omega = 50/Z`` are *per-cell* values chosen so that the **total**
+        Dirichlet mass of a row is 50 regardless of Z, whereas ``beta = 0.01``
+        is already stated as an **absolute** per-cell constant (total mass
+        ``0.01 * F``).  That inconsistency is the paper's, not ours.  On a corpus
+        with only ~7 attribute tokens per item, a row mass of 50 swamps the
+        likelihood and pins ``theta[c][z]`` (Eq (9)) and ``phi[i][z]`` (Eq (2))
+        at their uniform priors, which in turn caps Eq (12) at
+        ``pp(u,v) <= max_c thetabar_i[c] = 1/Z``.  Passing ``alpha_abs`` /
+        ``omega_abs`` sets those two per-cell pseudo-counts to absolute values
+        in the same style as ``beta``, so the row mass becomes
+        ``alpha_abs * Z`` instead of 50.  Nothing else changes; ``rho`` and
+        ``beta`` keep their paper definitions.
+
+        Values must be strictly positive (a Dirichlet pseudo-count of 0 makes
+        the collapsed conditionals degenerate for unseen cells).
+        """
         # Section 4.1.1 + SPEC Section 8:
         #   rho = 50/C, beta = 0.01, alpha = 50/Z, omega = 50/Z, eps1 = 0.1
         #   N_neg = U*(U-1)*(1 + D/E) - D - E
@@ -128,13 +152,37 @@ class Hyper:
             )
             eps0 = EPS0_FLOOR
 
+        # Opt-in absolute overrides (see the docstring).  None => paper value.
+        if alpha_abs is None:
+            alpha = 50.0 / Z
+        else:
+            alpha = float(alpha_abs)
+            if not (alpha > 0.0):
+                raise ValueError("alpha_abs must be > 0, got %r" % (alpha_abs,))
+            warnings.append(
+                "DEVIATION: alpha overridden to the absolute value %.6g "
+                "(paper: 50/Z = %.6g); row mass %.6g instead of 50"
+                % (alpha, 50.0 / Z, alpha * Z)
+            )
+        if omega_abs is None:
+            omega = 50.0 / Z
+        else:
+            omega = float(omega_abs)
+            if not (omega > 0.0):
+                raise ValueError("omega_abs must be > 0, got %r" % (omega_abs,))
+            warnings.append(
+                "DEVIATION: omega overridden to the absolute value %.6g "
+                "(paper: 50/Z = %.6g); row mass %.6g instead of 50"
+                % (omega, 50.0 / Z, omega * Z)
+            )
+
         return Hyper(
             C=C,
             Z=Z,
             rho=50.0 / C,
-            alpha=50.0 / Z,
+            alpha=alpha,
             beta=0.01,
-            omega=50.0 / Z,
+            omega=omega,
             eps0=eps0,
             eps1=0.1,
             zeta=float(zeta),
