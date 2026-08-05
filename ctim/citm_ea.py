@@ -261,7 +261,6 @@ def mutate_population(
             
     return mutated_pop
 
-
 def local_search_population(
     population_with_fitness: List[Dict[str, Any]],
     model: Any,
@@ -272,96 +271,64 @@ def local_search_population(
     rng: random.Random | None = None
 ) -> List[Dict[str, Any]]:
     """
-    Applies Local Search on the top 10% (determined by local_search_rate) 
-    of the population with the highest fitness values.
-
+    Applies Local Search on the top portion of the population (Algorithm 3).
     For each selected individual, it iterates through each seed node and attempts
-    to replace it with a random node from the same community (retrieved from U) 
-    that is not in the seed set. If fitness improves, the change is accepted.
-
-    Parameters
-    ----------
-    population_with_fitness : List[Dict[str, Any]]
-        List of dicts representing individuals, e.g., [{'seeds': [...], 'fitness': float}, ...]
-    model : Any
-        The trained Gibbs model (used to detect user communities).
-    ds : Any
-        The dataset object (needs ds.n_users).
-    mia : MIA
-        The MIA model for evaluating fitness I(S).
-    local_search_rate : float
-        The ratio of top individuals to undergo Local Search (default: 0.1).
-    max_passes : int
-        Maximum passes over the seed set (default: 1).
-    rng : random.Random or None
-        Random number generator.
-
-    Returns
-    -------
-    List[Dict[str, Any]]
-        The population with updated fitness values after Local Search.
+    to replace it with a random node from its outgoing neighborhood (N^(1)).
+    If fitness improves, the change is accepted and search continues on other neighbors.
+    Otherwise, the search for this seed node stops.
     """
     if rng is None:
         rng = random.Random()
-
-    # Detect communities for all users
-    user_communities = detect_communities(model.pi)
-    
-    # Group all users in U by community
-    members_by_c = defaultdict(list)
-    for u, c in enumerate(user_communities):
-        members_by_c[c].append(u)
 
     # Sort population by fitness descending
     sorted_pop = sorted(population_with_fitness, key=lambda x: x['fitness'], reverse=True)
     n_pop = len(sorted_pop)
     
-    # Identify top 10% individuals to apply local search
+    # Identify top portion of individuals to apply local search
     n_selected = max(1, int(round(local_search_rate * n_pop)))
     
     for i in range(n_selected):
         ind = sorted_pop[i]
-        seeds = list(ind['seeds'])
-        best_fit = ind['fitness']
-        K = len(seeds)
+        X_b = list(ind['seeds'])
+        X_a = list(X_b)
+        K = len(X_b)
         
-        # Local Search passes
-        for _ in range(max_passes):
-            improved = False
-            indices = list(range(K))
-            rng.shuffle(indices)
+        for idx in range(K):
+            flag = False
+            x_bi = X_b[idx]
             
-            for idx in indices:
-                old_node = seeds[idx]
-                comm = user_communities[old_node]
-                
-                # Find candidate replacement nodes from the community (in U)
-                current_set = set(seeds)
-                candidates = [v for v in members_by_c[comm] if v not in current_set]
+            # Outgoing neighbors of x_bi
+            neighbors = ds.out_adj[x_bi] if x_bi < len(ds.out_adj) and ds.out_adj[x_bi] is not None else []
+            if not neighbors:
+                continue
+            
+            neighbors_list = list(neighbors)
+            
+            while not flag:
+                current_set = set(X_b)
+                candidates = [v for v in neighbors_list if v not in current_set]
                 
                 if not candidates:
-                    continue
-                    
-                # Select a random candidate from U
+                    flag = True
+                    break
+                
+                # Replace x_bi with a random neighbor
                 new_node = rng.choice(candidates)
+                X_b[idx] = new_node
                 
-                # Temporarily replace and calculate new fitness
-                seeds[idx] = new_node
-                new_fit = mia.influence(seeds)
+                # Compare fitness
+                fit_b = mia.influence(X_b)
+                fit_a = mia.influence(X_a)
                 
-                if new_fit > best_fit:
-                    best_fit = new_fit
-                    improved = True
+                if fit_b > fit_a:
+                    X_a = list(X_b)
                 else:
-                    # Revert replacement
-                    seeds[idx] = old_node
+                    flag = True
             
-            if not improved:
-                break
-                
-        # Update individual with new seeds and fitness
-        ind['seeds'] = seeds
-        ind['fitness'] = best_fit
+            X_b = list(X_a)
+            
+        ind['seeds'] = X_a
+        ind['fitness'] = mia.influence(X_a)
 
     return sorted_pop
 
@@ -433,6 +400,16 @@ def run_ea(
     ew = EdgeWeights(model, ds)
     pp = ew.for_item(item)
     mia = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=h)
+
+    # Cache mia.influence evaluations to speed up crossover/mutation/local search
+    original_influence = mia.influence
+    influence_cache = {}
+    def cached_influence(seeds):
+        key = tuple(sorted(seeds))
+        if key not in influence_cache:
+            influence_cache[key] = original_influence(seeds)
+        return influence_cache[key]
+    mia.influence = cached_influence
 
     population = []
     for seeds in initial_pop_seeds:
