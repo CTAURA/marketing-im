@@ -25,14 +25,22 @@ from ctim.influence import EdgeWeights, MIA
 from ctim.ctim import ctim_run
 from ctim.citm_ea import run_ea
 
+import argparse
+
 def main():
+    parser = argparse.ArgumentParser(description="Run CTIM vs CTIM-EA comparison.")
+    parser.add_argument("--dataset", type=str, default="data/processed/digg",
+                        help="Path to the dataset directory (default: data/processed/digg)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
+    args = parser.parse_args()
+
     print("=" * 72)
-    print("Running CTIM vs CTIM-EA comparison on Digg dataset")
-    print("Parameters: K=20, PopSize=20, Generations=50, Quick Mode")
+    print(f"Running CTIM vs CTIM-EA comparison on {args.dataset}")
+    print("Parameters: K=20, PopSize=20, Generations=50, 200x200 Gibbs sweeps")
     print("=" * 72)
 
-    dataset_path = "data/processed/digg"
-    seed = 42
+    dataset_path = args.dataset
+    seed = args.seed
     rng = random.Random(seed)
 
     # 1. Load dataset
@@ -61,13 +69,13 @@ def main():
     test_items = ranked[:3] # evaluate on 3 items like quick config does
     print(f"Evaluating on items: {test_items}")
 
-    # 3. Train the reference Gibbs model (using quick mode settings: 30 iterations)
+    # 3. Train the reference Gibbs model (using 200 iterations for both stages)
     C = 100
     Z = 8
     
-    print(f"\n[3/5] Training Gibbs model (C={C}, Z={Z}, 30 iters)...")
+    print(f"\n[3/5] Training Gibbs model (C={C}, Z={Z}, 200 iters)...")
     t_train = time.perf_counter()
-    model = train_model(ds, train, C, Z, n_iter_topic=30, n_iter_comm=30, rng=rng, sampler="mh")
+    model = train_model(ds, train, C, Z, n_iter_topic=200, n_iter_comm=200, rng=rng, sampler="mh")
     train_time = time.perf_counter() - t_train
     print(f"Model training completed in {train_time:.2f}s")
 
