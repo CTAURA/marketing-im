@@ -36,7 +36,7 @@ def main():
 
     print("=" * 72)
     print(f"Running CTIM vs CTIM-EA comparison on {args.dataset}")
-    print("Parameters: K=20, PopSize=20, Generations=50, 200x200 Gibbs sweeps")
+    print("Parameters: K=20, PopSize=20, Generations=100, 200x200 Gibbs sweeps")
     print("=" * 72)
 
     dataset_path = args.dataset
@@ -103,8 +103,8 @@ def main():
     
     for item in test_items:
         t0 = time.perf_counter()
-        # EA has pop_size=20 and num_generations=50
-        res_ea = run_ea(model, ds, item, K=20, pop_size=20, num_generations=50, h=0.1, verbose=False, rng=rng)
+        # EA has pop_size=20 and num_generations=100
+        res_ea = run_ea(model, ds, item, K=20, pop_size=20, num_generations=100, h=0.1, verbose=False, rng=rng)
         ea_times.append(time.perf_counter() - t0)
         ea_spreads.append(res_ea['fitness'])
         print(f"  Item {item} - Spread: {res_ea['fitness']:.2f}, Time: {ea_times[-1]:.4f}s")
