@@ -189,19 +189,39 @@ def main(argv=None):
     p.add_argument("--mc", type=int, default=1000, help="MC-IC simulations (0 = skip)")
     p.add_argument("--mc-batches", dest="mc_batches", type=int, default=5)
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--item-index", dest="item_index", type=int, default=0)
+    p.add_argument("--item-index", dest="item_index", type=int, default=0,
+                   help="single item (kept for compatibility); --items overrides")
+    p.add_argument("--items", default="",
+                   help="comma-separated indices into test_items, e.g. 0,1,2. "
+                        "Each item needs its own Eq (12) pp (~257s on full Yelp) "
+                        "and its own run of every method.  'all' uses them all.")
     p.add_argument("--methods", default=",".join(ALL_METHODS))
     p.add_argument("--gg-seeds", dest="gg_seeds", default="",
                    help="precomputed GlobalGreedy seeds (comma list or file); "
                         "skips its selection, which costs ~66 min on full Yelp")
     p.add_argument("--probe-sample", dest="probe_sample", type=int, default=200,
                    help="nodes sampled for the arborescence-size probe (0 = skip)")
+    p.add_argument("--paper-eval", dest="paper_eval", action="store_true",
+                   help="grade at h_sel, i.e. reproduce the paper's own protocol "
+                        "(one h for both selection and Eq (18)).  This is the "
+                        "circular comparison; allowed only when asked for by name.")
     args = p.parse_args(argv)
 
-    if abs(args.h - args.h_eval) < 1e-12:
+    if args.paper_eval:
+        args.h_eval = args.h
+    if abs(args.h - args.h_eval) < 1e-12 and not args.paper_eval:
         print("ERROR: --h-eval equals --h; that is the circular comparison this "
-              "script exists to avoid.  Pick a finer --h-eval.")
+              "script exists to avoid.  Pick a finer --h-eval, or pass "
+              "--paper-eval to ask for the paper's protocol on purpose.")
         return 2
+    if args.paper_eval:
+        print("!" * 88)
+        print("! --paper-eval: grading at h_sel=%g, the SAME threshold used to select."
+              % args.h)
+        print("! This is the paper's protocol.  It is valid for the paper's own")
+        print("! baselines, none of which maximise Eq (18) directly.  It is NOT a")
+        print("! valid comparison for CTIM-G / GlobalGreedy, which do.")
+        print("!" * 88)
     methods = [m.strip() for m in args.methods.split(",") if m.strip()]
     gg_seeds = parse_seed_list(args.gg_seeds)
 
@@ -222,35 +242,110 @@ def main(argv=None):
     with open(args.cache, "rb") as fh:
         blob = pickle.load(fh)
     model = blob["model"]
-    item = blob["test_items"][args.item_index]
+    test_items = blob["test_items"]
     ew = EdgeWeights(model, ds)
     print("[setup] dataset + model + EdgeWeights            %s" % fmt(time.perf_counter() - t0))
-    print("        U=%d  E=%d  C=%d  item=%d" % (ds.n_users, ds.n_links, len(model.pi[0]), item))
+    print("        U=%d  E=%d  C=%d  test_items=%s"
+          % (ds.n_users, ds.n_links, len(model.pi[0]), test_items))
 
+    if args.items.strip().lower() == "all":
+        idxs = list(range(len(test_items)))
+    elif args.items.strip():
+        idxs = [int(x) for x in args.items.replace(" ", "").split(",") if x]
+    else:
+        idxs = [args.item_index]
+    idxs = [i for i in idxs if 0 <= i < len(test_items)]
+    if not idxs:
+        print("ERROR: no valid item index in --items/--item-index")
+        return 2
+
+    per_item = []
+    for run_i, idx in enumerate(idxs):
+        item = test_items[idx]
+        print("\n" + "#" * 88)
+        print("# ITEM %d of %d -- test_items[%d] = %d" % (run_i + 1, len(idxs), idx, item))
+        print("#" * 88)
+        res = run_one_item(args, ds, model, ew, item,
+                           probe=(run_i == 0 and args.probe_sample > 0))
+        per_item.append((idx, item, res))
+
+    if len(per_item) > 1:
+        report_across_items(per_item)
+
+    print("\n" + "=" * 88)
+    print("TOTAL %s   for %d item(s)" % (fmt(time.perf_counter() - t_all), len(per_item)))
+    print("=" * 88)
+    return 0
+
+
+def report_across_items(per_item):
+    """Aggregate over items -- on RELATIVE gaps only.
+
+    ``I_h_eval`` is NOT comparable across items: each item has its own Eq (12)
+    ``pp``, hence its own diffusion graph.  Averaging raw spreads across items
+    would be the same class of error as grading at ``h_sel``.  What does
+    transfer is the WITHIN-item relative gap between methods, so that is what is
+    averaged here, with its spread across items.
+    """
+    print("\n" + "=" * 88)
+    print("[A] ACROSS ITEMS -- relative gaps only")
+    print("=" * 88)
+    print("  I_h_eval is not comparable across items (different pp = different")
+    print("  graph).  Only the within-item gap vs the first method transfers.\n")
+
+    names = [r[0] for r in per_item[0][2]]
+    print("  %-16s %s" % ("method", "".join("%14s" % ("item %d" % it) for (_i, it, _r) in per_item)))
+    for j, nm in enumerate(names):
+        cells = []
+        for (_idx, _item, rows) in per_item:
+            cells.append("%13.4f " % rows[j][1])
+        print("  %-16s %s" % (nm, "".join(cells)))
+
+    print("\n  %-16s %10s %10s %10s %10s" % ("method", "mean gap%", "sd", "min", "max"))
+    for j, nm in enumerate(names):
+        gaps = []
+        for (_idx, _item, rows) in per_item:
+            base = rows[0][1]
+            gaps.append(100.0 * (rows[j][1] / base - 1.0) if base else 0.0)
+        m = sum(gaps) / len(gaps)
+        sd = (sum((g - m) ** 2 for g in gaps) / (len(gaps) - 1)) ** 0.5 if len(gaps) > 1 else 0.0
+        print("  %-16s %10.2f %10.2f %10.2f %10.2f" % (nm, m, sd, min(gaps), max(gaps)))
+    print("\n  A gap whose sd across items is comparable to its mean is not")
+    print("  established -- report the range, not just the mean.")
+
+
+def run_one_item(args, ds, model, ew, item, probe=True):
+    """One item end to end.  Returns [(method, I_h_eval, mc, se, secs, n_seeds), ...]."""
+    t_item = time.perf_counter()
     t0 = time.perf_counter()
     pp = ew.for_item(item)                                    # Eq (12)
     t_pp = time.perf_counter() - t0
     print("[setup] Eq (12) weights                          %s  (|pp|=%d)" % (fmt(t_pp), len(pp)))
+    gg_seeds = parse_seed_list(args.gg_seeds)
+    methods = [m.strip() for m in args.methods.split(",") if m.strip()]
 
     # ONE referee for every seed set, and one coarse evaluator for the historical column.
     referee = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h_eval)   # Eq (18)
-    coarse = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h)         # Eq (18), circular
+    if abs(args.h - args.h_eval) < 1e-12:
+        coarse = referee          # same threshold -> same trees; don't pay twice
+    else:
+        coarse = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h)     # Eq (18), circular
 
     rows = []
     for name in methods:
         print("\n--- %s ---" % name)
         rng = random.Random(args.seed)
         st = {}
-        probe = None
+        counted = None
         t0 = time.perf_counter()
         if name == "CTIM":
             seeds = ctim_select_seeds(model, ds, item, args.K, h=args.h,
                                       dp_tiebreak="paper-true", edge_weights=ew)
         elif name in ("CTIM-G", "CTIM-G+repair"):
             # own the MIA object so its memo dicts can be read back as counters
-            probe = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h)
+            counted = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h)
             seeds, st = select_seeds_global(model, ds, pp, args.K, rng, h=args.h,
-                                            mia=probe,
+                                            mia=counted,
                                             repair=(name == "CTIM-G+repair"))
         elif name == "GlobalGreedy":
             if gg_seeds is not None:
@@ -259,8 +354,8 @@ def main(argv=None):
                       % len(seeds))
                 t0 = None
             else:
-                probe = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h)
-                seeds = probe.greedy_incremental(args.K)
+                counted = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h)
+                seeds = counted.greedy_incremental(args.K)
         else:
             print("    unknown method %r -- skipped" % name)
             continue
@@ -280,14 +375,14 @@ def main(argv=None):
                 print("    dp_value %.4f is an UPPER BOUND (sum_m I(S_m) >= I(union)); "
                       "realised %.4f, independence gap %.2f%%"
                       % (dpv, val, 100.0 * (dpv / val - 1.0)))
-        rows.append((name, list(seeds), secs, st, probe))
+        rows.append((name, list(seeds), secs, st, counted))
 
     # ---- scoring: dedupe identical seed sets, h_eval is expensive -----------
     print("\n[scoring] one shared MIA(h_eval=%g) for every set ..." % args.h_eval)
     fine, crude, mcv = {}, {}, {}
     scored = []
     t0 = time.perf_counter()
-    for (name, seeds, secs, st, probe) in rows:
+    for (name, seeds, secs, st, counted) in rows:
         key = tuple(sorted(seeds))
         if key not in fine:
             fine[key] = referee.influence(list(seeds))          # Eq (18) at h_eval
@@ -295,7 +390,7 @@ def main(argv=None):
             mcv[key] = (mc_batches(ds.out_adj, pp, seeds, args.mc, args.mc_batches,
                                    args.seed + 1) if args.mc > 0 else (float("nan"), 0.0))
         m, se = mcv[key]
-        scored.append((name, seeds, secs, st, probe, fine[key], crude[key], m, se))
+        scored.append((name, seeds, secs, st, counted, fine[key], crude[key], m, se))
     print("[scoring] done in %s  (%d distinct seed sets for %d methods)"
           % (fmt(time.perf_counter() - t0), len(fine), len(scored)))
 
@@ -338,13 +433,13 @@ def main(argv=None):
           % (ds.n_users, ds.n_links, args.K, len(model.pi[0]), args.h))
     print("  t = mean |MIIA(v,h)|; each arborescence is a Dijkstra on -ln pp,")
     print("  costing O(t log t).  So (count, mean size) IS the empirical cost.\n")
-    for (name, _s, secs, st, probe, _f, _c, _m, _se) in scored:
+    for (name, _s, secs, st, counted, _f, _c, _m, _se) in scored:
         cost, note = COMPLEXITY.get(name, ("?", ""))
         print("  %s" % name)
         print("      cost : %s" % cost)
         print("      why  : %s" % note)
-        if probe is not None:
-            cnt, avg = arborescence_stats(probe)
+        if counted is not None:
+            cnt, avg = arborescence_stats(counted)
             print("      MEASURED: %d arborescences built, mean size %.1f" % (cnt, avg))
         if st:
             print("      MEASURED: %d curve gain evals, %d realisation gain evals"
@@ -355,7 +450,7 @@ def main(argv=None):
             print("      wall clock: %s" % fmt(secs))
         print("")
 
-    if args.probe_sample > 0:
+    if probe and args.probe_sample > 0:
         print("  full-graph vs induced-subgraph arborescence size")
         print("  (the ratio below is why CTIM is cheap and GlobalGreedy is not)")
         t0 = time.perf_counter()
@@ -371,11 +466,10 @@ def main(argv=None):
         print("      Both CTIM and GlobalGreedy build ~n arborescences; this ratio")
         print("      is the per-arborescence cost gap between them.")
 
-    print("\n" + "=" * 88)
-    print("TOTAL %s   (of which Eq (12) weights %s, shared by every method)"
-          % (fmt(time.perf_counter() - t_all), fmt(t_pp)))
-    print("=" * 88)
-    return 0
+    print("\n  item %d done in %s   (Eq (12) weights %s, shared by every method)"
+          % (item, fmt(time.perf_counter() - t_item), fmt(t_pp)))
+    return [(name, f, m, se, secs, len(seeds))
+            for (name, seeds, secs, _st, _ct, f, _c, m, se) in scored]
 
 
 if __name__ == "__main__":
