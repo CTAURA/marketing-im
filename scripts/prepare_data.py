@@ -42,7 +42,10 @@ if _REPO_ROOT not in sys.path:
 
 from ctim.dataset import load_dataset, summarize                    # noqa: E402
 from ctim.datasets import PAPER_TARGETS, paper_comparison_table     # noqa: E402
+from ctim.datasets.delicious import prepare_delicious               # noqa: E402
 from ctim.datasets.digg import prepare_digg                         # noqa: E402
+from ctim.datasets.epinions import prepare_epinions                 # noqa: E402
+from ctim.datasets.lastfm import prepare_lastfm                     # noqa: E402
 from ctim.datasets.synthetic import prepare_synthetic               # noqa: E402
 from ctim.datasets.yelp import prepare_yelp                         # noqa: E402
 
@@ -149,6 +152,71 @@ def cmd_yelp(args: argparse.Namespace) -> int:
     except FileNotFoundError as exc:
         # Absent raw data is a user-actionable condition, not a crash: print the
         # download instructions and exit non-zero without a traceback.
+        print(str(exc), file=sys.stderr)
+        return 2
+    if not args.no_verify:
+        _verify(out_dir, verbose=not args.quiet)
+    return 0
+
+
+def cmd_lastfm(args: argparse.Namespace) -> int:
+    out_dir = _resolve_out(args, "lastfm")
+    try:
+        prepare_lastfm(
+            raw_dir=args.raw_dir,
+            out_dir=out_dir,
+            target_users=args.target_users,
+            target_links=args.target_links,
+            target_items=args.target_items,
+            seed=args.seed,
+            verbose=not args.quiet,
+        )
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    if not args.no_verify:
+        _verify(out_dir, verbose=not args.quiet)
+    return 0
+
+
+def cmd_delicious(args: argparse.Namespace) -> int:
+    out_dir = _resolve_out(args, "delicious")
+    try:
+        prepare_delicious(
+            raw_dir=args.raw_dir,
+            out_dir=out_dir,
+            target_users=args.target_users,
+            target_links=args.target_links,
+            target_items=args.target_items,
+            seed=args.seed,
+            verbose=not args.quiet,
+        )
+    except FileNotFoundError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    if not args.no_verify:
+        _verify(out_dir, verbose=not args.quiet)
+    return 0
+
+
+def cmd_epinions(args: argparse.Namespace) -> int:
+    # Ciao ships the identical two files under the identical names, so one
+    # preparer serves both; only the dataset name and raw dir differ.
+    name = getattr(args, "name", "epinions")
+    out_dir = _resolve_out(args, name)
+    try:
+        prepare_epinions(
+            raw_dir=args.raw_dir,
+            out_dir=out_dir,
+            target_users=args.target_users,
+            target_links=args.target_links,
+            target_items=args.target_items,
+            arc_direction=args.arc_direction,
+            seed=args.seed,
+            name=name,
+            verbose=not args.quiet,
+        )
+    except FileNotFoundError as exc:
         print(str(exc), file=sys.stderr)
         return 2
     if not args.no_verify:
@@ -300,6 +368,92 @@ def build_parser() -> argparse.ArgumentParser:
                         "release (default: %(default)s)")
     _add_common(y)
     y.set_defaults(func=cmd_yelp)
+
+    # -- lastfm -------------------------------------------------------------
+    lf = sub.add_parser(
+        "lastfm", help="prepare HetRec 2011 Last.fm 2k (NOT a paper dataset)",
+        description="HetRec 2011 Last.fm 2k.  Added by this project, not used by "
+                    "the paper: real user-assigned tags (11,946 over 12,523 "
+                    "tagged artists) make items distinguishable, which is what "
+                    "Digg's synthesised 32-word vocabulary cannot do.  All three "
+                    "budgets default to 0 (keep everything) because there is no "
+                    "SPEC.md Section 8 row to hit.")
+    lf.add_argument("--raw-dir", default=os.path.join(DEFAULT_RAW, "lastfm"),
+                    help="directory holding the .dat files (default: %(default)s)")
+    lf.add_argument("--target-users", type=int, default=0,
+                    help="user budget; 0 disables subsampling (default: %(default)s)")
+    lf.add_argument("--target-links", type=int, default=0,
+                    help="directed-arc budget; 0 disables truncation (default: %(default)s)")
+    lf.add_argument("--target-items", type=int, default=0,
+                    help="item budget; 0 keeps every item (default: %(default)s)")
+    _add_common(lf)
+    lf.set_defaults(func=cmd_lastfm)
+
+    # -- delicious ----------------------------------------------------------
+    dl = sub.add_parser(
+        "delicious", help="prepare HetRec 2011 Delicious 2k (NOT a paper dataset)",
+        description="HetRec 2011 Delicious 2k.  Added by this project.  Unlike "
+                    "lastfm, the item attributes come from a separate "
+                    "population-wide table (bookmark_tags.dat) rather than from "
+                    "the same stream as the adoption log, so they are "
+                    "independent of who adopted what.  All three budgets default "
+                    "to 0 (keep everything): the paper never used this dataset.")
+    dl.add_argument("--raw-dir", default=os.path.join(DEFAULT_RAW, "delicious"),
+                    help="directory holding the .dat files (default: %(default)s)")
+    dl.add_argument("--target-users", type=int, default=0,
+                    help="user budget; 0 disables subsampling (default: %(default)s)")
+    dl.add_argument("--target-links", type=int, default=0,
+                    help="directed-arc budget; 0 disables truncation (default: %(default)s)")
+    dl.add_argument("--target-items", type=int, default=0,
+                    help="item budget; 0 keeps every item (default: %(default)s)")
+    _add_common(dl)
+    dl.set_defaults(func=cmd_delicious)
+
+    # -- epinions -----------------------------------------------------------
+    ep = sub.add_parser(
+        "epinions", help="prepare Epinions trust/ratings (NOT a paper dataset)",
+        description="Epinions with rating timestamps (Tang et al.).  Added by "
+                    "this project for the one property no other dataset here "
+                    "has: a genuinely ASYMMETRIC trust network (only 38.6% of "
+                    "arcs reciprocated).  Item attributes are very thin -- one "
+                    "categoryid per product over a 27-category catalog -- so do "
+                    "not draw topic-model conclusions from it.")
+    ep.add_argument("--raw-dir", default=os.path.join(DEFAULT_RAW, "epinions"),
+                    help="directory holding the txt files (default: %(default)s)")
+    ep.add_argument("--target-users", type=int, default=0,
+                    help="user budget; 0 disables subsampling (default: %(default)s)")
+    ep.add_argument("--target-links", type=int, default=0,
+                    help="directed-arc budget; 0 disables truncation (default: %(default)s)")
+    ep.add_argument("--target-items", type=int, default=0,
+                    help="item budget; 0 keeps every item (default: %(default)s)")
+    ep.add_argument("--arc-direction", choices=("influence", "raw"),
+                    default="influence",
+                    help="'influence' (default) reverses the columns: a row says "
+                         "A trusts B, so influence flows B -> A")
+    _add_common(ep)
+    ep.set_defaults(func=cmd_epinions, name="epinions")
+
+    # -- ciao ---------------------------------------------------------------
+    ci = sub.add_parser(
+        "ciao", help="prepare the Ciao trust/ratings sibling of epinions",
+        description="Ciao (Tang et al.), the smaller sibling of the Epinions "
+                    "release: identical two files under identical names, so it "
+                    "shares ctim.datasets.epinions verbatim.  Same caveat about "
+                    "thin item attributes -- one categoryid per product.")
+    ci.add_argument("--raw-dir", default=os.path.join(DEFAULT_RAW, "ciao"),
+                    help="directory holding the txt files (default: %(default)s)")
+    ci.add_argument("--target-users", type=int, default=0,
+                    help="user budget; 0 disables subsampling (default: %(default)s)")
+    ci.add_argument("--target-links", type=int, default=0,
+                    help="directed-arc budget; 0 disables truncation (default: %(default)s)")
+    ci.add_argument("--target-items", type=int, default=0,
+                    help="item budget; 0 keeps every item (default: %(default)s)")
+    ci.add_argument("--arc-direction", choices=("influence", "raw"),
+                    default="influence",
+                    help="'influence' (default) reverses the columns: a row says "
+                         "A trusts B, so influence flows B -> A")
+    _add_common(ci)
+    ci.set_defaults(func=cmd_epinions, name="ciao")
 
     # -- synthetic ----------------------------------------------------------
     s = sub.add_parser(

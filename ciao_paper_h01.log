@@ -1,0 +1,217 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! --paper-eval: grading at h_sel=0.1, the SAME threshold used to select.
+! This is the paper's protocol.  It is valid for the paper's own
+! baselines, none of which maximise Eq (18) directly.  It is NOT a
+! valid comparison for CTIM-G / GlobalGreedy, which do.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+========================================================================================
+CTIM-G   K=20  h_sel=0.1  h_eval=0.1  seed=42
+========================================================================================
+[setup] dataset + model + EdgeWeights            0.31s
+        U=2215  E=52721  C=100  test_items=[415, 4387, 4571]
+
+########################################################################################
+# ITEM 1 of 3 -- test_items[0] = 415
+########################################################################################
+[setup] Eq (12) weights                          3.71s  (|pp|=52721)
+
+--- CTIM ---
+    select 2.25s   |S|=20
+
+--- CTIM-G ---
+    select 3.15s   |S|=20
+    phases: mia 0.00s  solo 0.27s  curves 1.95s  dp 0.00s  realise 0.82s  repair 0.00s
+    communities used: 3 / 99   quota blocks: 110
+    allocation: {11: 9, 18: 5, 59: 6}
+    dp_value 144.8329 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 118.1930, independence gap 22.54%
+
+[scoring] one shared MIA(h_eval=0.1) for every set ...
+[scoring] done in 3.45s  (2 distinct seed sets for 2 methods)
+
+========================================================================================
+[R] RESULTS -- one pp, one item (415), one h_eval.  Comparable across rows.
+========================================================================================
+method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
+CTIM                   120.5889     0.00%    844.445 +- 1.16        2.25  20
+CTIM-G                 118.1930    -1.99%    844.175 +- 1.25        3.15  20
+
+  historical column -- I at h_sel=0.1, graded with the SAME threshold
+  used to select.  NOT a valid cross-method comparison; shown because
+  it is what earlier results/ tables reported.
+      CTIM                 120.5889
+      CTIM-G               118.1930
+
+  pairwise seed overlap:
+                                   CTIM          CTIM-G
+      CTIM                        20/20           14/20
+      CTIM-G                      14/20           20/20
+      (* = identical set)
+
+========================================================================================
+[C] COMPLEXITY -- textbook cost, and the primitive that dominates it
+========================================================================================
+  n=|V|=2215  m=|E|=52721  K=20  C=100  h_sel=0.1
+  t = mean |MIIA(v,h)|; each arborescence is a Dijkstra on -ln pp,
+  costing O(t log t).  So (count, mean size) IS the empirical cost.
+
+  CTIM
+      cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
+      why  : n arborescences, each on an INDUCED subgraph -> t_c is small
+      wall clock: 2.25s
+
+  CTIM-G
+      cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
+      why  : n arborescences, each on the FULL graph -> t is the global mean
+      MEASURED: 3319 arborescences built, mean size 7.6
+      MEASURED: 1165 curve gain evals, 217 realisation gain evals
+      wall clock: 3.15s
+
+  full-graph vs induced-subgraph arborescence size
+  (the ratio below is why CTIM is cheap and GlobalGreedy is not)
+      sampled 200 nodes in 0.22s
+      mean |MIIA| on the FULL graph      : 7.63
+      mean |MIIA| on the INDUCED subgraph: 3.67
+      ratio  full / induced             : 2.1x
+      Both CTIM and GlobalGreedy build ~n arborescences; this ratio
+      is the per-arborescence cost gap between them.
+
+  item 415 done in 12.85s   (Eq (12) weights 3.71s, shared by every method)
+
+########################################################################################
+# ITEM 2 of 3 -- test_items[1] = 4387
+########################################################################################
+[setup] Eq (12) weights                          0.88s  (|pp|=52721)
+
+--- CTIM ---
+    select 2.24s   |S|=20
+
+--- CTIM-G ---
+    select 3.28s   |S|=20
+    phases: mia 0.00s  solo 0.30s  curves 2.08s  dp 0.00s  realise 0.77s  repair 0.00s
+    communities used: 3 / 99   quota blocks: 110
+    allocation: {11: 9, 18: 5, 59: 6}
+    dp_value 144.8374 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 118.1959, independence gap 22.54%
+
+[scoring] one shared MIA(h_eval=0.1) for every set ...
+[scoring] done in 3.19s  (2 distinct seed sets for 2 methods)
+
+========================================================================================
+[R] RESULTS -- one pp, one item (4387), one h_eval.  Comparable across rows.
+========================================================================================
+method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
+CTIM                   120.6815     0.00%    843.995 +- 0.51        2.24  20
+CTIM-G                 118.1959    -2.06%    844.555 +- 1.53        3.28  20
+
+  historical column -- I at h_sel=0.1, graded with the SAME threshold
+  used to select.  NOT a valid cross-method comparison; shown because
+  it is what earlier results/ tables reported.
+      CTIM                 120.6815
+      CTIM-G               118.1959
+
+  pairwise seed overlap:
+                                   CTIM          CTIM-G
+      CTIM                        20/20           14/20
+      CTIM-G                      14/20           20/20
+      (* = identical set)
+
+========================================================================================
+[C] COMPLEXITY -- textbook cost, and the primitive that dominates it
+========================================================================================
+  n=|V|=2215  m=|E|=52721  K=20  C=100  h_sel=0.1
+  t = mean |MIIA(v,h)|; each arborescence is a Dijkstra on -ln pp,
+  costing O(t log t).  So (count, mean size) IS the empirical cost.
+
+  CTIM
+      cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
+      why  : n arborescences, each on an INDUCED subgraph -> t_c is small
+      wall clock: 2.24s
+
+  CTIM-G
+      cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
+      why  : n arborescences, each on the FULL graph -> t is the global mean
+      MEASURED: 3319 arborescences built, mean size 7.6
+      MEASURED: 1166 curve gain evals, 218 realisation gain evals
+      wall clock: 3.28s
+
+
+  item 4387 done in 9.69s   (Eq (12) weights 0.88s, shared by every method)
+
+########################################################################################
+# ITEM 3 of 3 -- test_items[2] = 4571
+########################################################################################
+[setup] Eq (12) weights                          0.85s  (|pp|=52721)
+
+--- CTIM ---
+    select 2.12s   |S|=20
+
+--- CTIM-G ---
+    select 3.07s   |S|=20
+    phases: mia 0.00s  solo 0.27s  curves 1.91s  dp 0.00s  realise 0.77s  repair 0.00s
+    communities used: 3 / 99   quota blocks: 110
+    allocation: {11: 9, 18: 5, 59: 6}
+    dp_value 144.8551 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 118.2075, independence gap 22.54%
+
+[scoring] one shared MIA(h_eval=0.1) for every set ...
+[scoring] done in 3.00s  (2 distinct seed sets for 2 methods)
+
+========================================================================================
+[R] RESULTS -- one pp, one item (4571), one h_eval.  Comparable across rows.
+========================================================================================
+method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
+CTIM                   119.9672     0.00%    844.560 +- 2.21        2.12  20
+CTIM-G                 118.2075    -1.47%    845.400 +- 1.03        3.07  20
+
+  historical column -- I at h_sel=0.1, graded with the SAME threshold
+  used to select.  NOT a valid cross-method comparison; shown because
+  it is what earlier results/ tables reported.
+      CTIM                 119.9672
+      CTIM-G               118.2075
+
+  pairwise seed overlap:
+                                   CTIM          CTIM-G
+      CTIM                        20/20           14/20
+      CTIM-G                      14/20           20/20
+      (* = identical set)
+
+========================================================================================
+[C] COMPLEXITY -- textbook cost, and the primitive that dominates it
+========================================================================================
+  n=|V|=2215  m=|E|=52721  K=20  C=100  h_sel=0.1
+  t = mean |MIIA(v,h)|; each arborescence is a Dijkstra on -ln pp,
+  costing O(t log t).  So (count, mean size) IS the empirical cost.
+
+  CTIM
+      cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
+      why  : n arborescences, each on an INDUCED subgraph -> t_c is small
+      wall clock: 2.12s
+
+  CTIM-G
+      cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
+      why  : n arborescences, each on the FULL graph -> t is the global mean
+      MEASURED: 3319 arborescences built, mean size 7.6
+      MEASURED: 1166 curve gain evals, 218 realisation gain evals
+      wall clock: 3.07s
+
+
+  item 4571 done in 9.11s   (Eq (12) weights 0.85s, shared by every method)
+
+========================================================================================
+[A] ACROSS ITEMS -- relative gaps only
+========================================================================================
+  I_h_eval is not comparable across items (different pp = different
+  graph).  Only the within-item gap vs the first method transfers.
+
+  method                 item 415     item 4387     item 4571
+  CTIM                  120.5889      120.6815      119.9672 
+  CTIM-G                118.1930      118.1959      118.2075 
+
+  method            mean gap%         sd        min        max
+  CTIM                   0.00       0.00       0.00       0.00
+  CTIM-G                -1.84       0.32      -2.06      -1.47
+
+  A gap whose sd across items is comparable to its mean is not
+  established -- report the range, not just the mean.
+
+========================================================================================
+TOTAL 32.02s   for 3 item(s)
+========================================================================================

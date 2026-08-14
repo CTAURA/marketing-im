@@ -1,0 +1,100 @@
+==========================================================================
+h CALIBRATION -- dataset=epinions C=100 Z=8 seed=42
+==========================================================================
+[prepare] loading dataset from data/processed/epinions
+[prepare] epinions: U=18059 E=354897 M=261216 F=27 adoptions=754606
+[prepare] 5048 potential-influence logs (Delta=2592000s) in 1.82s
+[prepare] split 60/20/20 -> train=3028 valid=1009 test=1011
+[prepare] evaluating on 3 test items: [385, 4024, 665]
+[fit] CTIM model C=100 Z=8 (reference): 30+30 Gibbs iters, sampler=mh
+[fit] done in 512.97s
+[phase 0] prepare total (incl. Gibbs fit)   517.962s
+[phase 0]   build_logs                        1.821s
+[phase 0]   Gibbs fit  (Eq (1)-(9))         512.973s
+[phase 0] model cached to data/processed/_epinions.pkl
+
+==========================================================================
+PHASE 1 -- model diagnostics (is there any topic signal to find?)
+==========================================================================
+  Hbar = (1/T) sum_t H^(t),   H^(t) = -sum_{i=1..K} p_i^(t) log p_i^(t)
+  raw Hbar is in [0, ln K]; normalised is Hbar/ln K in [0, 1],
+  where 1.0 = uniform = the prior was never overcome = nothing learned.
+
+  matrix            T     K       Hbar       ln K   Hbar/lnK   mean max_i    uniform
+  phi[i][z]    261216     8    2.07814    2.07944    0.99938      0.14216    0.12500
+  p_z_given_i  261216     8    2.07814    2.07944    0.99938      0.14216    0.12500
+  theta[c][z]     100     8    2.07944    2.07944    1.00000      0.12578    0.12500
+  psi[z][f]         8    27    2.59932    3.29584    0.78867      0.19780    0.03704
+  pi[v][c]      18059   100    4.41874    4.60517    0.95952      0.04758    0.01000
+
+  --> Eq (12) is bounded above by max_{c,z} theta = 0.1266  (1/Z = 0.1250)
+  --> rows read (T) x components (K); psi is the control: it is the one
+      matrix whose prior is an absolute 0.01 rather than a mass-50 50/X.
+[phase 1]    6.001s
+
+==========================================================================
+PHASE 2 -- Eq (12) edge-weight distribution (item 385)
+==========================================================================
+  354897 edges with pp > 0 (of 354897)   [built in 23.373s]
+  quantile            p1      p10      p25      p50      p75      p90      p99     p100
+  pp             0.08525  0.08760  0.09036  0.09532  0.10239  0.10826  0.11472  0.12159
+  -ln pp           2.462    2.435    2.404    2.351    2.279    2.223    2.165    2.107
+
+  fraction of edges with pp >= h, and the single-edge budget check:
+    h          -ln h        frac pp>=h   max hops of the STRONGEST edge
+    0.1        2.303        0.3201       1.09
+    0.03       3.507        1.0000       1.66
+    0.01       4.605        1.0000       2.19
+    0.003      5.809        1.0000       2.76
+    0.001      6.908        1.0000       3.28
+    0.0003     8.112        1.0000       3.85
+    0.0001     9.210        1.0000       4.37
+  (max pp = 0.12159; 'max hops' = ln h / ln max_pp -- an UPPER bound on
+   the depth any MIP can reach, since no edge is stronger than max pp)
+[phase 2]   23.698s
+
+==========================================================================
+PHASE 3 -- MIP distance distribution  d(u->v) = -ln pp(MIP(u,v))
+==========================================================================
+  one Dijkstra per sampled node at h_open=1e-05 (cutoff -ln h = 11.513);
+  every h in the grid is then just a re-threshold of the same array.
+  MIA(h_open) constructed                     0.579s
+  300 nodes sampled, 300 Dijkstra runs           59.528s
+  d(u->v) over 4087623 reachable pairs:
+    quantile          p1      p10      p25      p50      p75      p90      p99
+    d              4.382    6.594    6.844    8.941    9.261   11.202   11.483
+    pp(MIP)     1.25e-02 1.37e-03 1.07e-03 1.31e-04 9.50e-05 1.36e-05 1.03e-05
+
+  |MIIA| and max MIP depth as a function of h:
+    h          -ln h      mean |MIIA|-1  max depth (hops)
+    0.1        2.303      9.39           1
+    0.03       3.507      25.92          1
+    0.01       4.605      509.28         2
+    0.003      5.809      823.50         2
+    0.001      6.908      3876.59        3
+    0.0003     8.112      5406.73        3
+    0.0001     9.210      9797.27        4
+[phase 3]   61.336s
+
+==========================================================================
+PHASE 4 -- influence saturation I_h(S) for a FIXED seed set
+==========================================================================
+  reference S = MIA-greedy K=20 at h=0.1             362.886s
+  S = [13214, 2292, 2008, 6308, 8029, 15869, 13067, 3232, 9181, 4580, 3276, 6796, 11518, 7200, 11994, 10716, 6875, 1998, 8524, 5650]
+
+    h          I_h(S)       vs saturated |reached|  seconds
+    0.1        1565.121     -            6366       9.507s
+    0.03       1573.522     -            6391       15.211s
+    0.01       2359.568     -            12345      308.593s
+
+  saturated value (smallest h reached) = 2359.568
+    h          I_h(S)       fraction of saturated
+    0.1        1565.121     0.6633
+    0.03       1573.522     0.6669
+    0.01       2359.568     1.0000
+  SKIPPED (previous h exceeded the 120s budget): 0.003, 0.001, 0.0003, 0.0001
+[phase 4]  696.197s
+
+==========================================================================
+TOTAL 1306.445s
+==========================================================================
