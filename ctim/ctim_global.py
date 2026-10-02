@@ -104,6 +104,7 @@ __all__ = [
     "celf_select",
     "build_global_curves",
     "realise_quota_greedy",
+    "lazy_global_allocation",
     "select_seeds_global",
 ]
 
@@ -295,6 +296,165 @@ def realise_quota_greedy(mia, comm, alloc, K, solo, members_of=None):
 
 
 # ---------------------------------------------------------------------------
+# phases 1+2, lazily -- build a curve point only when the allocation needs it
+# ---------------------------------------------------------------------------
+
+
+class _LazyCurve:
+    """Community ``m``'s greedy curve, extended one point at a time on demand.
+
+    The same lazy greedy as `celf_select` with no quota -- same initial keys
+    (``solo``), same two-sided staleness test, same node-id tie-break, same
+    ``g <= 0`` stopping rule -- but it can stop after any number of picks and
+    resume later.  ``peek()`` returns the exact gain of the next curve point
+    WITHOUT committing it; ``commit()`` takes it.
+
+    Because the curve is measured against this community's own prefix only
+    (``S`` here never contains another community's seeds), its next gain does
+    not change when OTHER communities pick.  That is the property that makes
+    the outer heap in `lazy_global_allocation` exact without ever re-checking.
+    """
+
+    __slots__ = ("m", "mia", "solo", "members", "budget", "heap", "S",
+                 "picked", "gains", "cache", "n_evals")
+
+    def __init__(self, m, mia, members, solo, budget):
+        self.m = m
+        self.mia = mia
+        self.solo = solo
+        self.members = members
+        self.budget = budget
+        self.heap = [(-solo[u], u) for u in members]
+        heapq.heapify(self.heap)
+        self.S = set()
+        self.picked = []
+        self.gains = []
+        self.cache = {}       # u -> exact gain at the CURRENT S; cleared on commit
+        self.n_evals = 0
+
+    def peek(self):
+        """``(gain, u)`` of the next curve point, or ``None`` if the curve ended."""
+        if len(self.picked) >= self.budget:
+            return None
+        heap = self.heap
+        while heap:
+            negk, u = heap[0]
+            g = self.cache.get(u)
+            if g is None:
+                g = self.mia.marginal_gain(self.S, u) if self.S else self.solo[u]
+                self.cache[u] = g
+                self.n_evals += 1
+            if -negk > g + _EPS or -negk < g - _EPS:
+                heapq.heapreplace(heap, (-g, u))   # stale bound: correct in place
+                continue
+            if g <= 0.0 and self.picked:
+                return None    # same stopping rule as celf_select
+            return g, u
+        return None
+
+    def commit(self):
+        """Take the point `peek()` just returned; returns ``(gain, u)``."""
+        g, u = self.peek()          # served from the cache: no new evaluation
+        heapq.heappop(self.heap)
+        self.picked.append(u)
+        self.S.add(u)
+        self.gains.append(g)
+        self.cache = {}
+        return g, u
+
+
+def lazy_global_allocation(comm, ds, pp, K, h, mia=None, solo=None,
+                           verbose=False):
+    """Phases 1 and 2 of CTIM-G fused: curves are extended only as needed.
+
+    `build_global_curves` + `allocate_exact` build EVERY community's curve to
+    ``min(K, |c_m|)`` points and then search all splits of K.  But the curves
+    are concave (greedy gains on a submodular objective are non-increasing),
+    and on concave curves the optimal split is reached by handing out the K
+    seeds one at a time, each to the community whose NEXT point is worth most.
+    So only the points that split actually uses ever need building:
+
+        heap of communities keyed by the gain of their next curve point
+        repeat K times: pop the best, commit that point, push it back with
+                        the gain of the point after
+
+    The initial keys are ``max_{u in c_m} solo[u]``, read off the ``solo``
+    table, so starting costs no gain evaluation at all.
+
+    Ties between communities go to the smaller community label (the heap's
+    secondary key).  `allocate_exact` breaks ties differently (fewer seeds,
+    then by its backtrack order), so on an EXACT tie the two can fund
+    different communities with the same total value; off ties they agree.
+
+    Returns ``(concat, dp_value, alloc, members_of, mia, solo, stats)``, where
+    the first three mean exactly what `allocate_exact`'s return values mean.
+    """
+    n_comm = (max(comm) + 1) if len(comm) else 0
+    members = [[] for _ in range(n_comm)]
+    n = min(len(comm), ds.n_users)
+    for v in range(n):
+        members[comm[v]].append(v)
+
+    t0 = time.perf_counter()
+    if mia is None:
+        mia = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=h)
+    t_mia = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    if solo is None:
+        solo = solo_influence_all(mia)
+    t_solo = time.perf_counter() - t0
+
+    t0 = time.perf_counter()
+    states = {}
+    outer = []
+    for m in range(n_comm):
+        mem = members[m]
+        if not mem:
+            continue
+        st = _LazyCurve(m, mia, mem, solo, min(K, len(mem)))
+        states[m] = st
+        nxt = st.peek()     # the first point is solo-exact: no evaluation spent
+        if nxt is not None:
+            outer.append((-nxt[0], m))
+    heapq.heapify(outer)
+
+    alloc = {}
+    dp_value = 0.0
+    handed = 0
+    while handed < K and outer:
+        _neg, m = heapq.heappop(outer)
+        st = states[m]
+        g, _u = st.commit()
+        alloc[m] = alloc.get(m, 0) + 1
+        dp_value += g
+        handed += 1
+        nxt = st.peek()     # the ONLY place curve points cost evaluations
+        if nxt is not None:
+            heapq.heappush(outer, (-nxt[0], m))
+    t_curve = time.perf_counter() - t0
+
+    concat = []
+    for m in sorted(alloc):
+        concat.extend(states[m].picked)
+    members_of = {m: members[m] for m in states}
+    n_evals = sum(st.n_evals for st in states.values())
+    points = sum(len(st.picked) for st in states.values())
+
+    if verbose:
+        print("    [lazy] %d communities, %d curve points built, %d gain evals"
+              % (len(states), points, n_evals))
+    return concat, dp_value, alloc, members_of, mia, solo, {
+        "mia_seconds": t_mia,
+        "solo_seconds": t_solo,
+        "curve_seconds": t_curve,
+        "curve_gain_evals": n_evals,
+        "curve_points_built": points,
+        "n_communities": len(states),
+    }
+
+
+# ---------------------------------------------------------------------------
 # end-to-end
 # ---------------------------------------------------------------------------
 
@@ -302,7 +462,7 @@ def realise_quota_greedy(mia, comm, alloc, K, solo, members_of=None):
 def select_seeds_global(model, ds, pp, K, rng, h=0.1, comm=None,
                         edge_weights=None, item=None, repair=False,
                         mia=None, solo=None, repair_pool=0, repair_rounds=25,
-                        repair_budget=None, verbose=False):
+                        repair_budget=None, lazy=False, verbose=False):
     """CTIM-G: Eq (19) communities + global gains + exact DP + quota realisation.
 
     Returns ``(seeds, stats)``.
@@ -328,6 +488,9 @@ def select_seeds_global(model, ds, pp, K, rng, h=0.1, comm=None,
     repair_pool   0 (default) = offer every node to the repair, which is what
                   makes its "certified 1-swap local optimum" claim complete;
                   ``n > 0`` = only the top ``n`` by ``I({u})``
+    lazy          replace phases 1+2 by `lazy_global_allocation`: build only
+                  the curve points the allocation uses.  Same objective, same
+                  optimal split; may differ from the DP only on an exact tie.
 
     ``stats`` carries a per-phase wall-clock breakdown and the independence
     diagnostics described in the module docstring.
@@ -355,6 +518,7 @@ def select_seeds_global(model, ds, pp, K, rng, h=0.1, comm=None,
         "n_communities_used": 0,
         "allocation": {},
         "curve_gain_evals": 0,
+        "curve_points_built": 0,
         "realise_gain_evals": 0,
         "quota_blocks": 0,
         "dp_value": 0.0,
@@ -388,26 +552,37 @@ def select_seeds_global(model, ds, pp, K, rng, h=0.1, comm=None,
         comm = detect_communities(model.pi)  # Eq (19), Algorithm 2 lines 22-24
     stats["detect_seconds"] = time.perf_counter() - t0
 
-    # ------------------------------------------------- phase 1: the curves
-    curves, mia, solo, cstats = build_global_curves(
-        comm, ds, pp, K, h, mia=mia, solo=solo, verbose=verbose)
-    for key in ("mia_seconds", "solo_seconds", "curve_seconds",
-                "curve_gain_evals", "n_communities"):
-        stats[key] = cstats[key]
+    if lazy:
+        # ------------------------------- phases 1+2 fused: lazy curves
+        stats["method"] = "ctim-global-lazy"
+        concat, dp_value, alloc, members_of, mia, solo, cstats = \
+            lazy_global_allocation(comm, ds, pp, K, h, mia=mia, solo=solo,
+                                   verbose=verbose)
+        for key in ("mia_seconds", "solo_seconds", "curve_seconds",
+                    "curve_gain_evals", "curve_points_built", "n_communities"):
+            stats[key] = cstats[key]
+    else:
+        # --------------------------------------------- phase 1: the curves
+        curves, mia, solo, cstats = build_global_curves(
+            comm, ds, pp, K, h, mia=mia, solo=solo, verbose=verbose)
+        for key in ("mia_seconds", "solo_seconds", "curve_seconds",
+                    "curve_gain_evals", "n_communities"):
+            stats[key] = cstats[key]
+        stats["curve_points_built"] = sum(c.cap for c in curves)
 
-    # ---------------------------------------------------- phase 2: the DP
-    t0 = time.perf_counter()
-    concat, dp_value, alloc = allocate_exact(curves, K)   # exact O(C K^2)
-    stats["dp_seconds"] = time.perf_counter() - t0
+        # ------------------------------------------------ phase 2: the DP
+        t0 = time.perf_counter()
+        concat, dp_value, alloc = allocate_exact(curves, K)   # exact O(C K^2)
+        stats["dp_seconds"] = time.perf_counter() - t0
+        members_of = {}
+        for cur in curves:
+            members_of[cur.m] = cur.members
     stats["dp_value"] = dp_value
     stats["allocation"] = dict(sorted(alloc.items()))
     stats["n_communities_used"] = len(alloc)
 
     # -------------------------------------------- phase 3: the realisation
     t0 = time.perf_counter()
-    members_of = {}
-    for cur in curves:
-        members_of[cur.m] = cur.members
     seeds, _gains, ev, blocked = realise_quota_greedy(
         mia, comm, alloc, K, solo, members_of=members_of)
     stats["realise_seconds"] = time.perf_counter() - t0
@@ -722,6 +897,54 @@ if __name__ == "__main__":
           % (st7["value"],
              ">=" if st7["value"] >= mia3.influence(s_ind7) else "< ",
              mia3.influence(s_ind7)))
+
+    # ------------------------------------------------------------------ [8]
+    print("[8] lazy curves reach the same allocation with fewer curve points")
+    # Random real-valued pp, so exact ties between curve points (the one case
+    # where the two may legitimately fund different communities) do not occur.
+    rng8 = random.Random(2024)
+    trials = same_alloc = same_seeds = same_dp = same_val = fewer = 0
+    worst = 0.0
+    pts_full = pts_lazy = ev_full = ev_lazy = 0
+    for trial in range(40):
+        n8 = rng8.randrange(25, 70)
+        C8 = rng8.randrange(2, 8)
+        arcs8, seen8 = [], set()
+        for _ in range(n8 * 2):
+            a, b = rng8.randrange(n8), rng8.randrange(n8)
+            if a != b and (a, b) not in seen8:
+                seen8.add((a, b))
+                arcs8.append((a, b, rng8.uniform(0.05, 0.95)))
+        o8, i8, p8 = build(n8, arcs8)
+        ds8 = _DS(n8, o8, i8)
+        comm8 = [rng8.randrange(C8) for _ in range(n8)]
+        mod8 = _M([onehot(c, C8) for c in comm8])
+        K8 = rng8.randrange(1, 12)
+        full, sf = select_seeds_global(mod8, ds8, p8, K8, random.Random(1),
+                                       h=0.1, comm=comm8)
+        lazy, sl = select_seeds_global(mod8, ds8, p8, K8, random.Random(1),
+                                       h=0.1, comm=comm8, lazy=True)
+        trials += 1
+        same_alloc += sf["allocation"] == sl["allocation"]
+        same_seeds += full == lazy
+        same_dp += abs(sf["dp_value"] - sl["dp_value"]) < 1e-9
+        same_val += abs(sf["value"] - sl["value"]) < 1e-9
+        fewer += sl["curve_points_built"] <= sf["curve_points_built"]
+        worst = max(worst, abs(sf["dp_value"] - sl["dp_value"]))
+        pts_full += sf["curve_points_built"]
+        pts_lazy += sl["curve_points_built"]
+        ev_full += sf["curve_gain_evals"]
+        ev_lazy += sl["curve_gain_evals"]
+    check("same optimal DP value on every instance (concave curves)",
+          same_dp == trials, "%d/%d, worst |diff| %.2e" % (same_dp, trials, worst))
+    check("same allocation, same seed sequence, same returned value",
+          same_alloc == trials and same_seeds == trials and same_val == trials,
+          "alloc %d/%d  seeds %d/%d  value %d/%d"
+          % (same_alloc, trials, same_seeds, trials, same_val, trials))
+    check("never builds more curve points than the full build",
+          fewer == trials,
+          "points %d -> %d, curve gain evals %d -> %d"
+          % (pts_full, pts_lazy, ev_full, ev_lazy))
 
     print("")
     if failures:

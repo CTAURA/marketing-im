@@ -7,45 +7,55 @@
 ========================================================================================
 CTIM-G   K=20  h_sel=0.1  h_eval=0.1  seed=42
 ========================================================================================
-[setup] dataset + model + EdgeWeights            0.37s
+[setup] dataset + model + EdgeWeights            0.38s
         U=1892  E=25434  C=100  test_items=[86, 251, 69]
 
 ########################################################################################
 # ITEM 1 of 3 -- test_items[0] = 86
 ########################################################################################
-[setup] Eq (12) weights                          2.50s  (|pp|=25434)
+[setup] Eq (12) weights                          2.39s  (|pp|=25434)
 
 --- CTIM ---
-    [timing] Eq (12) rebuilt inside CTIM: 0.40s -- excluded, CTIM-G is handed pp prebuilt
-    select 0.49s   |S|=20
+    [timing] Eq (12) rebuilt inside CTIM: 0.38s -- excluded, CTIM-G is handed pp prebuilt
+    select 0.47s   |S|=20
 
 --- CTIM-G ---
-    select 0.41s   |S|=20
-    phases: mia 0.00s  solo 0.08s  curves 0.20s  dp 0.00s  realise 0.08s  repair 0.00s
+    select 0.38s   |S|=20
+    phases: mia 0.00s  solo 0.08s  curves 0.19s  dp 0.00s  realise 0.07s  repair 0.00s
+    communities used: 3 / 99   quota blocks: 227
+    allocation: {7: 1, 17: 3, 92: 16}
+    dp_value 87.3767 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 81.7176, independence gap 6.93%
+
+--- CTIM-G-lazy ---
+    select 0.38s   |S|=20
+    phases: mia 0.00s  solo 0.08s  curves 0.18s  dp 0.00s  realise 0.08s  repair 0.00s
     communities used: 3 / 99   quota blocks: 227
     allocation: {7: 1, 17: 3, 92: 16}
     dp_value 87.3767 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 81.7176, independence gap 6.93%
 
 [scoring] one shared MIA(h_eval=0.1) for every set ...
-[scoring] done in 0.07s  (2 distinct seed sets for 2 methods)
+[scoring] done in 6.19s  (2 distinct seed sets for 3 methods)
 
 ========================================================================================
 [R] RESULTS -- one pp, one item (86), one h_eval.  Comparable across rows.
 ========================================================================================
 method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
-CTIM                    83.4763     0.00%          --              0.49  20
-CTIM-G                  81.7176    -2.11%          --              0.41  20
+CTIM                    83.4763     0.00%    571.445 +- 0.88        0.47  20
+CTIM-G                  81.7176    -2.11%    572.158 +- 0.72        0.38  20
+CTIM-G-lazy             81.7176    -2.11%    572.158 +- 0.72        0.38  20
 
   historical column -- I at h_sel=0.1, graded with the SAME threshold
   used to select.  NOT a valid cross-method comparison; shown because
   it is what earlier results/ tables reported.
       CTIM                  83.4763
       CTIM-G                81.7176
+      CTIM-G-lazy           81.7176
 
   pairwise seed overlap:
-                                   CTIM          CTIM-G
-      CTIM                        20/20           16/20
-      CTIM-G                      16/20           20/20
+                                   CTIM          CTIM-G     CTIM-G-lazy
+      CTIM                        20/20           16/20           16/20
+      CTIM-G                      16/20           20/20          20/20*
+      CTIM-G-lazy                 16/20          20/20*           20/20
       (* = identical set)
 
 ========================================================================================
@@ -58,62 +68,81 @@ CTIM-G                  81.7176    -2.11%          --              0.41  20
   CTIM
       cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
       why  : n arborescences, each on an INDUCED subgraph -> t_c is small
-      wall clock: 0.49s
+      wall clock: 0.47s
 
   CTIM-G
       cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
       why  : n arborescences, each on the FULL graph -> t is the global mean
       MEASURED: 2811 arborescences built, mean size 3.2
       MEASURED: 965 curve gain evals, 133 realisation gain evals
-      wall clock: 0.41s
+      MEASURED: 799 curve points built
+      wall clock: 0.38s
+
+  CTIM-G-lazy
+      cost : O(n * t log t)  global init  +  O(K log C)  community heap  +  curve points built only on demand  +  O(K * t^2) realisation
+      why  : same objective and split as CTIM-G; builds ~K curve points, not ~C*K
+      MEASURED: 2162 arborescences built, mean size 3.9
+      MEASURED: 208 curve gain evals, 133 realisation gain evals
+      MEASURED: 20 curve points built
+      wall clock: 0.38s
 
   full-graph vs induced-subgraph arborescence size
   (the ratio below is why CTIM is cheap and GlobalGreedy is not)
-      sampled 200 nodes in 0.12s
+      sampled 200 nodes in 0.08s
       mean |MIIA| on the FULL graph      : 3.85
       mean |MIIA| on the INDUCED subgraph: 3.42
       ratio  full / induced             : 1.1x
       Both CTIM and GlobalGreedy build ~n arborescences; this ratio
       is the per-arborescence cost gap between them.
 
-  item 86 done in 4.02s   (Eq (12) weights 2.50s, shared by every method)
+  item 86 done in 10.30s   (Eq (12) weights 2.39s, shared by every method)
 
 ########################################################################################
 # ITEM 2 of 3 -- test_items[1] = 251
 ########################################################################################
-[setup] Eq (12) weights                          0.41s  (|pp|=25434)
+[setup] Eq (12) weights                          0.37s  (|pp|=25434)
 
 --- CTIM ---
-    [timing] Eq (12) rebuilt inside CTIM: 0.40s -- excluded, CTIM-G is handed pp prebuilt
-    select 0.52s   |S|=20
+    [timing] Eq (12) rebuilt inside CTIM: 0.39s -- excluded, CTIM-G is handed pp prebuilt
+    select 0.47s   |S|=20
 
 --- CTIM-G ---
-    select 0.46s   |S|=20
-    phases: mia 0.00s  solo 0.09s  curves 0.22s  dp 0.00s  realise 0.10s  repair 0.00s
+    select 0.44s   |S|=20
+    phases: mia 0.00s  solo 0.08s  curves 0.20s  dp 0.00s  realise 0.08s  repair 0.00s
+    communities used: 3 / 99   quota blocks: 248
+    allocation: {7: 1, 17: 3, 92: 16}
+    dp_value 89.7518 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 83.7831, independence gap 7.12%
+
+--- CTIM-G-lazy ---
+    select 0.36s   |S|=20
+    phases: mia 0.00s  solo 0.08s  curves 0.15s  dp 0.00s  realise 0.09s  repair 0.00s
     communities used: 3 / 99   quota blocks: 248
     allocation: {7: 1, 17: 3, 92: 16}
     dp_value 89.7518 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 83.7831, independence gap 7.12%
 
 [scoring] one shared MIA(h_eval=0.1) for every set ...
-[scoring] done in 0.11s  (2 distinct seed sets for 2 methods)
+[scoring] done in 6.10s  (2 distinct seed sets for 3 methods)
 
 ========================================================================================
 [R] RESULTS -- one pp, one item (251), one h_eval.  Comparable across rows.
 ========================================================================================
 method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
-CTIM                    85.6152     0.00%          --              0.52  20
-CTIM-G                  83.7831    -2.14%          --              0.46  20
+CTIM                    85.6152     0.00%    573.829 +- 1.05        0.47  20
+CTIM-G                  83.7831    -2.14%    574.014 +- 0.66        0.44  20
+CTIM-G-lazy             83.7831    -2.14%    574.014 +- 0.66        0.36  20
 
   historical column -- I at h_sel=0.1, graded with the SAME threshold
   used to select.  NOT a valid cross-method comparison; shown because
   it is what earlier results/ tables reported.
       CTIM                  85.6152
       CTIM-G                83.7831
+      CTIM-G-lazy           83.7831
 
   pairwise seed overlap:
-                                   CTIM          CTIM-G
-      CTIM                        20/20           15/20
-      CTIM-G                      15/20           20/20
+                                   CTIM          CTIM-G     CTIM-G-lazy
+      CTIM                        20/20           15/20           15/20
+      CTIM-G                      15/20           20/20          20/20*
+      CTIM-G-lazy                 15/20          20/20*           20/20
       (* = identical set)
 
 ========================================================================================
@@ -126,54 +155,73 @@ CTIM-G                  83.7831    -2.14%          --              0.46  20
   CTIM
       cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
       why  : n arborescences, each on an INDUCED subgraph -> t_c is small
-      wall clock: 0.52s
+      wall clock: 0.47s
 
   CTIM-G
       cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
       why  : n arborescences, each on the FULL graph -> t is the global mean
       MEASURED: 2819 arborescences built, mean size 3.4
       MEASURED: 970 curve gain evals, 138 realisation gain evals
-      wall clock: 0.46s
+      MEASURED: 799 curve points built
+      wall clock: 0.44s
+
+  CTIM-G-lazy
+      cost : O(n * t log t)  global init  +  O(K log C)  community heap  +  curve points built only on demand  +  O(K * t^2) realisation
+      why  : same objective and split as CTIM-G; builds ~K curve points, not ~C*K
+      MEASURED: 2169 arborescences built, mean size 4.1
+      MEASURED: 215 curve gain evals, 138 realisation gain evals
+      MEASURED: 20 curve points built
+      wall clock: 0.36s
 
 
-  item 251 done in 1.93s   (Eq (12) weights 0.41s, shared by every method)
+  item 251 done in 8.16s   (Eq (12) weights 0.37s, shared by every method)
 
 ########################################################################################
 # ITEM 3 of 3 -- test_items[2] = 69
 ########################################################################################
-[setup] Eq (12) weights                          0.41s  (|pp|=25434)
+[setup] Eq (12) weights                          0.36s  (|pp|=25434)
 
 --- CTIM ---
-    [timing] Eq (12) rebuilt inside CTIM: 0.40s -- excluded, CTIM-G is handed pp prebuilt
-    select 0.27s   |S|=20
+    [timing] Eq (12) rebuilt inside CTIM: 0.36s -- excluded, CTIM-G is handed pp prebuilt
+    select 0.24s   |S|=20
 
 --- CTIM-G ---
-    select 0.31s   |S|=20
-    phases: mia 0.00s  solo 0.06s  curves 0.15s  dp 0.00s  realise 0.05s  repair 0.00s
+    select 0.28s   |S|=20
+    phases: mia 0.00s  solo 0.05s  curves 0.11s  dp 0.03s  realise 0.05s  repair 0.00s
+    communities used: 3 / 99   quota blocks: 205
+    allocation: {7: 1, 17: 3, 92: 16}
+    dp_value 68.4271 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 64.1730, independence gap 6.63%
+
+--- CTIM-G-lazy ---
+    select 0.24s   |S|=20
+    phases: mia 0.00s  solo 0.06s  curves 0.09s  dp 0.00s  realise 0.05s  repair 0.00s
     communities used: 3 / 99   quota blocks: 205
     allocation: {7: 1, 17: 3, 92: 16}
     dp_value 68.4271 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 64.1730, independence gap 6.63%
 
 [scoring] one shared MIA(h_eval=0.1) for every set ...
-[scoring] done in 0.05s  (2 distinct seed sets for 2 methods)
+[scoring] done in 6.15s  (2 distinct seed sets for 3 methods)
 
 ========================================================================================
 [R] RESULTS -- one pp, one item (69), one h_eval.  Comparable across rows.
 ========================================================================================
 method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
-CTIM                    65.6504     0.00%          --              0.27  20
-CTIM-G                  64.1730    -2.25%          --              0.31  20
+CTIM                    65.6504     0.00%    561.157 +- 0.81        0.24  20
+CTIM-G                  64.1730    -2.25%    561.906 +- 0.96        0.28  20
+CTIM-G-lazy             64.1730    -2.25%    561.906 +- 0.96        0.24  20
 
   historical column -- I at h_sel=0.1, graded with the SAME threshold
   used to select.  NOT a valid cross-method comparison; shown because
   it is what earlier results/ tables reported.
       CTIM                  65.6504
       CTIM-G                64.1730
+      CTIM-G-lazy           64.1730
 
   pairwise seed overlap:
-                                   CTIM          CTIM-G
-      CTIM                        20/20           16/20
-      CTIM-G                      16/20           20/20
+                                   CTIM          CTIM-G     CTIM-G-lazy
+      CTIM                        20/20           16/20           16/20
+      CTIM-G                      16/20           20/20          20/20*
+      CTIM-G-lazy                 16/20          20/20*           20/20
       (* = identical set)
 
 ========================================================================================
@@ -186,17 +234,26 @@ CTIM-G                  64.1730    -2.25%          --              0.31  20
   CTIM
       cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
       why  : n arborescences, each on an INDUCED subgraph -> t_c is small
-      wall clock: 0.27s
+      wall clock: 0.24s
 
   CTIM-G
       cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
       why  : n arborescences, each on the FULL graph -> t is the global mean
       MEASURED: 2765 arborescences built, mean size 2.3
       MEASURED: 1016 curve gain evals, 149 realisation gain evals
-      wall clock: 0.31s
+      MEASURED: 799 curve points built
+      wall clock: 0.28s
+
+  CTIM-G-lazy
+      cost : O(n * t log t)  global init  +  O(K log C)  community heap  +  curve points built only on demand  +  O(K * t^2) realisation
+      why  : same objective and split as CTIM-G; builds ~K curve points, not ~C*K
+      MEASURED: 2108 arborescences built, mean size 2.7
+      MEASURED: 206 curve gain evals, 149 realisation gain evals
+      MEASURED: 20 curve points built
+      wall clock: 0.24s
 
 
-  item 69 done in 1.47s   (Eq (12) weights 0.41s, shared by every method)
+  item 69 done in 7.67s   (Eq (12) weights 0.36s, shared by every method)
 
 ========================================================================================
 [A] ACROSS ITEMS -- relative gaps only
@@ -207,14 +264,16 @@ CTIM-G                  64.1730    -2.25%          --              0.31  20
   method                  item 86      item 251       item 69
   CTIM                   83.4763       85.6152       65.6504 
   CTIM-G                 81.7176       83.7831       64.1730 
+  CTIM-G-lazy            81.7176       83.7831       64.1730 
 
   method            mean gap%         sd        min        max
   CTIM                   0.00       0.00       0.00       0.00
   CTIM-G                -2.17       0.08      -2.25      -2.11
+  CTIM-G-lazy           -2.17       0.08      -2.25      -2.11
 
   A gap whose sd across items is comparable to its mean is not
   established -- report the range, not just the mean.
 
 ========================================================================================
-TOTAL 7.81s   for 3 item(s)
+TOTAL 26.53s   for 3 item(s)
 ========================================================================================

@@ -80,6 +80,10 @@ COMPLEXITY = {
     "CTIM-G+repair": (
         "CTIM-G  +  O(rounds * K * |pool| ) swap evaluations, pruned by bound (*)",
         "adds one 1-swap local-search pass over the global MIA"),
+    "CTIM-G-lazy": (
+        "O(n * t log t)  global init  +  O(K log C)  community heap  +  "
+        "curve points built only on demand  +  O(K * t^2) realisation",
+        "same objective and split as CTIM-G; builds ~K curve points, not ~C*K"),
     "GlobalGreedy": (
         "O(n * t log t)  eager IncInf init  +  O(K * t^2)  updates",
         "n arborescences on the FULL graph; the init dominates and does not "
@@ -338,15 +342,26 @@ def run_one_item(args, ds, model, ew, item, probe=True):
         st = {}
         counted = None
         t0 = time.perf_counter()
+        eq12_inside = 0.0
         if name == "CTIM":
             seeds = ctim_select_seeds(model, ds, item, args.K, h=args.h,
                                       dp_tiebreak="paper-true", edge_weights=ew)
-        elif name in ("CTIM-G", "CTIM-G+repair"):
+            # ctim_select_seeds has no `pp` parameter, so it rebuilds Eq (12)
+            # internally from `edge_weights` -- EdgeWeights.for_item does NOT
+            # cache (influence.py:254).  CTIM-G is handed the prebuilt `pp` and
+            # never pays that cost, so leaving it in would inflate CTIM by
+            # 40-50% and understate the CTIM-G / CTIM ratio by ~2x.  Subtract it
+            # and compare selection against selection.
+            eq12_inside = ctim_select_seeds.last_stats.get("weights", 0.0)
+            print("    [timing] Eq (12) rebuilt inside CTIM: %s -- excluded, "
+                  "CTIM-G is handed pp prebuilt" % fmt(eq12_inside))
+        elif name in ("CTIM-G", "CTIM-G+repair", "CTIM-G-lazy"):
             # own the MIA object so its memo dicts can be read back as counters
             counted = MIA(ds.n_users, ds.out_adj, ds.in_adj, pp, h=args.h)
             seeds, st = select_seeds_global(model, ds, pp, args.K, rng, h=args.h,
                                             mia=counted,
-                                            repair=(name == "CTIM-G+repair"))
+                                            repair=(name == "CTIM-G+repair"),
+                                            lazy=(name == "CTIM-G-lazy"))
         elif name == "GlobalGreedy":
             if gg_seeds is not None:
                 seeds = gg_seeds[:args.K]
@@ -359,7 +374,8 @@ def run_one_item(args, ds, model, ew, item, probe=True):
         else:
             print("    unknown method %r -- skipped" % name)
             continue
-        secs = (time.perf_counter() - t0) if t0 is not None else float("nan")
+        secs = ((time.perf_counter() - t0 - eq12_inside) if t0 is not None
+                else float("nan"))
         print("    select %s   |S|=%d" % (fmt(secs) if secs == secs else "(injected)", len(seeds)))
         if st:
             print("    phases: mia %s  solo %s  curves %s  dp %s  realise %s  repair %s"
@@ -444,6 +460,9 @@ def run_one_item(args, ds, model, ew, item, probe=True):
         if st:
             print("      MEASURED: %d curve gain evals, %d realisation gain evals"
                   % (st.get("curve_gain_evals", 0), st.get("realise_gain_evals", 0)))
+            if st.get("curve_points_built"):
+                print("      MEASURED: %d curve points built"
+                      % st.get("curve_points_built", 0))
             if st.get("repaired"):
                 print("      MEASURED: repair accepted %d swap(s)" % st.get("repair_swaps", 0))
         if secs == secs:

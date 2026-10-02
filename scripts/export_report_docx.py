@@ -33,7 +33,10 @@ _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # log file  ->  (display name, processed dir name)
 RUNS = [
     ("yelp_paper_h01.log", "Yelp", "yelp"),
-    ("digg_items_K20.log", "Digg", "digg"),
+    # digg_paper_h01.log is the re-run at h=0.1 with the Eq (12) subtraction of
+    # Section 5.3; digg_items_K20.log is the older h_eval=0.05 run and its CTIM
+    # column still carries the redundant rebuild.
+    ("digg_paper_h01.log", "Digg", "digg"),
     ("epinions_paper_h01.log", "Epinions", "epinions"),
     ("ciao_paper_h01.log", "Ciao", "ciao"),
     ("lastfm_paper_h01.log", "Last.fm", "lastfm"),
@@ -214,7 +217,8 @@ def build(rows, methods):
             "%.1f" % PROBE_RATIO.get(r["name"], 0.0),
             "%+.3f%%" % (sum(gaps) / len(gaps)) if gaps else "—",
             f(sel0, 2) + " s", f(sel1, 2) + " s",
-            ("%.2f×" % (sel1 / sel0)) if (sel0 and sel1) else "—",
+            (("%.2f×" % (sel1 / sel0)) + (" *" if r["name"] == "Yelp" else ""))
+            if (sel0 and sel1) else "—",
         ])
     A(table(["Tập dữ liệu", "|V|", "Loại", "Tỉ lệ cây", "Khoảng cách CTIM-G",
              "CTIM", "CTIM-G", "CTIM-G / CTIM"],
@@ -223,8 +227,10 @@ def build(rows, methods):
     A(caption("“Tỉ lệ cây” là kích thước trung bình của cây ảnh hưởng dựng trên "
               "đồ thị đầy đủ chia cho kích thước dựng trên đồ thị con của một cộng "
               "đồng; nó đo mức độ mà việc chia cộng đồng thực sự thu hẹp bài toán. "
-              "Cột cuối là tỉ số thời gian: lớn hơn 1 nghĩa là CTIM-G chậm hơn, "
-              "nhỏ hơn 1 nghĩa là CTIM-G nhanh hơn."))
+              "Cột cuối là tỉ số thời gian: lớn hơn 1 nghĩa là CTIM-G chậm hơn. "
+              "(*) Yelp được chạy trên máy khác, TRƯỚC khi khoản trừ Eq (12) ở Mục "
+              "5.3 tồn tại, nên cột CTIM của nó vẫn mang chi phí dựng lại; tỉ số "
+              "thật của Yelp cao hơn con số in ở đây. Cần chạy lại để lấy số đúng."))
 
     # ---- 4. complexity -----------------------------------------------------
     A(heading("4. Độ phức tạp", 1))
@@ -264,13 +270,16 @@ def build(rows, methods):
     A(heading("5.1. Quy luật", 2))
     A(para("Sắp sáu tập theo tỉ lệ cây — mức độ mà việc chia cộng đồng thực sự thu "
            "hẹp bài toán — thì kết quả tách thành hai nhóm rõ rệt."))
-    A(table(["Nhóm", "Tỉ lệ cây", "Tập dữ liệu", "Khoảng cách CTIM-G", "Tốc độ"],
+    A(table(["Nhóm", "Tỉ lệ cây", "Tập dữ liệu", "Khoảng cách CTIM-G", "Kết luận"],
             [["Cộng đồng cắt sâu", "≥ 4", "Yelp, Epinions", "+6.8% … +8.4%",
-              "CTIM-G chậm hơn 2.5–11×"],
+              "đáng đổi thời gian lấy chất lượng"],
              ["Cộng đồng cắt nông", "≤ 2.1", "Ciao, Digg, Last.fm, Delicious",
-              "−2.2% … +0.3%", "CTIM-G nhanh hơn hoặc ngang"]],
-            [2100, 1200, 2400, 2100, 2400],
+              "−2.2% … +0.3%", "không thắng, và cũng không nhanh hơn"]],
+            [2100, 1200, 2400, 2100, 2600],
             ["left", "right", "left", "right", "left"]))
+    A(caption("Tỉ lệ cây dự báo được khoảng cách chất lượng. Nó KHÔNG dự báo được "
+              "tỉ số thời gian: sau khi sửa lỗi đo ở Mục 5.3, CTIM-G chậm hơn hoặc "
+              "ngang CTIM trên gần như mọi tập, kể cả tập nhỏ."))
 
     A(heading("5.2. Tập lớn", 2))
     A(para("Trên Yelp (366,427 người dùng) và Epinions (18,059), đồ thị đủ lớn để "
@@ -288,11 +297,20 @@ def build(rows, methods):
            "người. Đồ thị con lúc này gần bằng đồ thị đầy đủ — tỉ lệ cây 1.1 và "
            "1.0. Không còn gì để CTIM-G thu lại, nên nó không thắng: −2.17% và "
            "0.00%."))
-    A(para(run("Và chiều tốc độ đảo ngược.", bold=True)
-           + run(" CTIM phải trả O(nC) cho bước phát hiện cộng đồng bất kể n nhỏ "
-                 "cỡ nào, trong khi cây trên đồ thị nhỏ thì rẻ. Kết quả: CTIM-G "
-                 "NHANH hơn CTIM 2.05 lần trên Last.fm và 4.25 lần trên Delicious. "
-                 "Trên tập nhỏ, CTIM-G vừa nhanh hơn vừa không kém hơn đáng kể.")))
+    A(para("Và ở đây CTIM-G cũng không nhanh hơn. Nó chạy chậm hơn hoặc ngang "
+           "CTIM trên gần như mọi tập; chỉ trên Last.fm nó nhỉnh hơn một chút, "
+           "trong phạm vi mà chênh lệch đó không đáng để chọn thuật toán."))
+    A(para(run("Cảnh báo về một phiên bản trước của báo cáo này.", bold=True)
+           + run(" Bản trước khẳng định CTIM-G nhanh hơn CTIM 2.05 lần trên "
+                 "Last.fm và 4.25 lần trên Delicious, và rút ra kết luận “trên tập "
+                 "nhỏ chiều tốc độ đảo ngược”. Khẳng định đó ")
+           + run("sai", bold=True)
+           + run(", do một lỗi đo đã được tìm ra và sửa: hàm chọn hạt giống của "
+                 "CTIM không nhận tham số pp nên tự dựng lại Eq (12) bên trong, "
+                 "mà hàm dựng trọng số không lưu đệm; CTIM-G thì được truyền pp "
+                 "dựng sẵn. Đo được, 41–47% thời gian “chọn” của CTIM thực chất là "
+                 "dựng lại Eq (12). Mọi con số thời gian trong báo cáo này đã trừ "
+                 "khoản đó ra và là kết quả đo lại.")))
 
     A(heading("5.4. Hai trường hợp cần nói riêng", 2))
     A(para(run("Delicious — phép đo vô nghĩa.", bold=True)
@@ -307,13 +325,15 @@ def build(rows, methods):
                  "bỏ quy luật trên.")))
 
     A(heading("5.5. Khuyến nghị", 2))
-    A(bullet(run("Đồ thị lớn, cộng đồng cắt sâu (tỉ lệ cây ≥ 4): dùng ")
+    A(bullet(run("Cộng đồng cắt sâu (tỉ lệ cây ≥ 4): dùng ")
              + run("CTIM-G", bold=True)
-             + run(" nếu chấp nhận được chi phí gấp 2.5–11 lần. Đây là trường hợp "
-                   "duy nhất nó đáng giá.")))
-    A(bullet(run("Đồ thị nhỏ hoặc cộng đồng cắt nông: dùng ")
-             + run("CTIM-G", bold=True)
-             + run(" vì nó nhanh hơn, chứ không phải vì nó chính xác hơn.")))
+             + run(". Đây là trường hợp DUY NHẤT nó đáng giá — đổi thời gian lấy "
+                   "chất lượng, và phần chất lượng thu được là thật.")))
+    A(bullet(run("Cộng đồng cắt nông (tỉ lệ cây ≤ 2.1): dùng ")
+             + run("CTIM", bold=True)
+             + run(". CTIM-G không chính xác hơn, mà cũng không nhanh hơn. Sau khi "
+                   "sửa lỗi đo ở Mục 5.3 thì lợi thế tốc độ được cho là có ở tập "
+                   "nhỏ đã biến mất.")))
     A(bullet("Trước khi chọn, đo tỉ lệ cây trên chính dữ liệu của mình. Nó dự đoán "
              "được cả khoảng cách chất lượng lẫn tỉ lệ tốc độ, và rẻ hơn nhiều so "
              "với chạy cả hai phương pháp."))

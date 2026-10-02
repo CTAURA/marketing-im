@@ -1,0 +1,279 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! --paper-eval: grading at h_sel=0.1, the SAME threshold used to select.
+! This is the paper's protocol.  It is valid for the paper's own
+! baselines, none of which maximise Eq (18) directly.  It is NOT a
+! valid comparison for CTIM-G / GlobalGreedy, which do.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+========================================================================================
+CTIM-G   K=20  h_sel=0.1  h_eval=0.1  seed=42
+========================================================================================
+[setup] dataset + model + EdgeWeights            4.44s
+        U=30358  E=99846  C=100  test_items=[2369, 1113, 535]
+
+########################################################################################
+# ITEM 1 of 3 -- test_items[0] = 2369
+########################################################################################
+[setup] Eq (12) weights                          32.75s  (|pp|=99846)
+
+--- CTIM ---
+    [timing] Eq (12) rebuilt inside CTIM: 1.59s -- excluded, CTIM-G is handed pp prebuilt
+    select 2.32s   |S|=20
+
+--- CTIM-G ---
+    select 9.20s   |S|=20
+    phases: mia 0.00s  solo 1.00s  curves 6.48s  dp 0.00s  realise 1.29s  repair 0.00s
+    communities used: 2 / 100   quota blocks: 12
+    allocation: {39: 9, 52: 11}
+    dp_value 861.1672 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 763.8906, independence gap 12.73%
+
+--- CTIM-G-lazy ---
+    select 4.54s   |S|=20
+    phases: mia 0.00s  solo 0.82s  curves 1.76s  dp 0.00s  realise 1.30s  repair 0.00s
+    communities used: 2 / 100   quota blocks: 12
+    allocation: {39: 9, 52: 11}
+    dp_value 861.1672 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 763.8906, independence gap 12.73%
+
+[scoring] one shared MIA(h_eval=0.1) for every set ...
+[scoring] done in 9.55s  (2 distinct seed sets for 3 methods)
+
+========================================================================================
+[R] RESULTS -- one pp, one item (2369), one h_eval.  Comparable across rows.
+========================================================================================
+method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
+CTIM                   761.4040     0.00%    924.607 +- 0.76        2.32  20
+CTIM-G                 763.8906     0.33%    918.214 +- 1.09        9.20  20
+CTIM-G-lazy            763.8906     0.33%    918.214 +- 1.09        4.54  20
+
+  historical column -- I at h_sel=0.1, graded with the SAME threshold
+  used to select.  NOT a valid cross-method comparison; shown because
+  it is what earlier results/ tables reported.
+      CTIM                 761.4040
+      CTIM-G               763.8906
+      CTIM-G-lazy          763.8906
+
+  pairwise seed overlap:
+                                   CTIM          CTIM-G     CTIM-G-lazy
+      CTIM                        20/20           18/20           18/20
+      CTIM-G                      18/20           20/20          20/20*
+      CTIM-G-lazy                 18/20          20/20*           20/20
+      (* = identical set)
+
+========================================================================================
+[C] COMPLEXITY -- textbook cost, and the primitive that dominates it
+========================================================================================
+  n=|V|=30358  m=|E|=99846  K=20  C=100  h_sel=0.1
+  t = mean |MIIA(v,h)|; each arborescence is a Dijkstra on -ln pp,
+  costing O(t log t).  So (count, mean size) IS the empirical cost.
+
+  CTIM
+      cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
+      why  : n arborescences, each on an INDUCED subgraph -> t_c is small
+      wall clock: 2.32s
+
+  CTIM-G
+      cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
+      why  : n arborescences, each on the FULL graph -> t is the global mean
+      MEASURED: 35651 arborescences built, mean size 2.3
+      MEASURED: 4621 curve gain evals, 127 realisation gain evals
+      MEASURED: 2000 curve points built
+      wall clock: 9.20s
+
+  CTIM-G-lazy
+      cost : O(n * t log t)  global init  +  O(K log C)  community heap  +  curve points built only on demand  +  O(K * t^2) realisation
+      why  : same objective and split as CTIM-G; builds ~K curve points, not ~C*K
+      MEASURED: 33633 arborescences built, mean size 2.4
+      MEASURED: 186 curve gain evals, 127 realisation gain evals
+      MEASURED: 20 curve points built
+      wall clock: 4.54s
+
+  full-graph vs induced-subgraph arborescence size
+  (the ratio below is why CTIM is cheap and GlobalGreedy is not)
+      sampled 200 nodes in 0.46s
+      mean |MIIA| on the FULL graph      : 1.29
+      mean |MIIA| on the INDUCED subgraph: 1.09
+      ratio  full / induced             : 1.2x
+      Both CTIM and GlobalGreedy build ~n arborescences; this ratio
+      is the per-arborescence cost gap between them.
+
+  item 2369 done in 60.95s   (Eq (12) weights 32.75s, shared by every method)
+
+########################################################################################
+# ITEM 2 of 3 -- test_items[1] = 1113
+########################################################################################
+[setup] Eq (12) weights                          1.73s  (|pp|=99846)
+
+--- CTIM ---
+    [timing] Eq (12) rebuilt inside CTIM: 1.64s -- excluded, CTIM-G is handed pp prebuilt
+    select 2.18s   |S|=20
+
+--- CTIM-G ---
+    select 10.26s   |S|=20
+    phases: mia 0.00s  solo 1.06s  curves 7.17s  dp 0.01s  realise 1.42s  repair 0.00s
+    communities used: 2 / 100   quota blocks: 12
+    allocation: {39: 9, 52: 11}
+    dp_value 861.1947 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 764.0019, independence gap 12.72%
+
+--- CTIM-G-lazy ---
+    select 5.40s   |S|=20
+    phases: mia 0.00s  solo 1.10s  curves 2.10s  dp 0.00s  realise 1.52s  repair 0.00s
+    communities used: 2 / 100   quota blocks: 12
+    allocation: {39: 9, 52: 11}
+    dp_value 861.1947 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 764.0019, independence gap 12.72%
+
+[scoring] one shared MIA(h_eval=0.1) for every set ...
+[scoring] done in 10.56s  (2 distinct seed sets for 3 methods)
+
+========================================================================================
+[R] RESULTS -- one pp, one item (1113), one h_eval.  Comparable across rows.
+========================================================================================
+method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
+CTIM                   761.5153     0.00%    924.866 +- 0.99        2.18  20
+CTIM-G                 764.0019     0.33%    918.091 +- 1.18       10.26  20
+CTIM-G-lazy            764.0019     0.33%    918.091 +- 1.18        5.40  20
+
+  historical column -- I at h_sel=0.1, graded with the SAME threshold
+  used to select.  NOT a valid cross-method comparison; shown because
+  it is what earlier results/ tables reported.
+      CTIM                 761.5153
+      CTIM-G               764.0019
+      CTIM-G-lazy          764.0019
+
+  pairwise seed overlap:
+                                   CTIM          CTIM-G     CTIM-G-lazy
+      CTIM                        20/20           18/20           18/20
+      CTIM-G                      18/20           20/20          20/20*
+      CTIM-G-lazy                 18/20          20/20*           20/20
+      (* = identical set)
+
+========================================================================================
+[C] COMPLEXITY -- textbook cost, and the primitive that dominates it
+========================================================================================
+  n=|V|=30358  m=|E|=99846  K=20  C=100  h_sel=0.1
+  t = mean |MIIA(v,h)|; each arborescence is a Dijkstra on -ln pp,
+  costing O(t log t).  So (count, mean size) IS the empirical cost.
+
+  CTIM
+      cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
+      why  : n arborescences, each on an INDUCED subgraph -> t_c is small
+      wall clock: 2.18s
+
+  CTIM-G
+      cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
+      why  : n arborescences, each on the FULL graph -> t is the global mean
+      MEASURED: 35651 arborescences built, mean size 2.3
+      MEASURED: 4621 curve gain evals, 128 realisation gain evals
+      MEASURED: 2000 curve points built
+      wall clock: 10.26s
+
+  CTIM-G-lazy
+      cost : O(n * t log t)  global init  +  O(K log C)  community heap  +  curve points built only on demand  +  O(K * t^2) realisation
+      why  : same objective and split as CTIM-G; builds ~K curve points, not ~C*K
+      MEASURED: 33633 arborescences built, mean size 2.4
+      MEASURED: 186 curve gain evals, 128 realisation gain evals
+      MEASURED: 20 curve points built
+      wall clock: 5.40s
+
+
+  item 1113 done in 32.18s   (Eq (12) weights 1.73s, shared by every method)
+
+########################################################################################
+# ITEM 3 of 3 -- test_items[2] = 535
+########################################################################################
+[setup] Eq (12) weights                          1.69s  (|pp|=99846)
+
+--- CTIM ---
+    [timing] Eq (12) rebuilt inside CTIM: 1.66s -- excluded, CTIM-G is handed pp prebuilt
+    select 2.46s   |S|=20
+
+--- CTIM-G ---
+    select 10.23s   |S|=20
+    phases: mia 0.00s  solo 0.95s  curves 7.14s  dp 0.01s  realise 1.50s  repair 0.00s
+    communities used: 2 / 100   quota blocks: 12
+    allocation: {39: 9, 52: 11}
+    dp_value 861.2629 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 764.1362, independence gap 12.71%
+
+--- CTIM-G-lazy ---
+    select 4.75s   |S|=20
+    phases: mia 0.00s  solo 1.10s  curves 1.84s  dp 0.00s  realise 1.35s  repair 0.00s
+    communities used: 2 / 100   quota blocks: 12
+    allocation: {39: 9, 52: 11}
+    dp_value 861.2629 is an UPPER BOUND (sum_m I(S_m) >= I(union)); realised 764.1362, independence gap 12.71%
+
+[scoring] one shared MIA(h_eval=0.1) for every set ...
+[scoring] done in 9.21s  (2 distinct seed sets for 3 methods)
+
+========================================================================================
+[R] RESULTS -- one pp, one item (535), one h_eval.  Comparable across rows.
+========================================================================================
+method                 I_h_eval   vs base       MC-IC +- SE   select(s)  |S|
+CTIM                   761.6496     0.00%    924.914 +- 1.07        2.46  20
+CTIM-G                 764.1362     0.33%    918.224 +- 0.83       10.23  20
+CTIM-G-lazy            764.1362     0.33%    918.224 +- 0.83        4.75  20
+
+  historical column -- I at h_sel=0.1, graded with the SAME threshold
+  used to select.  NOT a valid cross-method comparison; shown because
+  it is what earlier results/ tables reported.
+      CTIM                 761.6496
+      CTIM-G               764.1362
+      CTIM-G-lazy          764.1362
+
+  pairwise seed overlap:
+                                   CTIM          CTIM-G     CTIM-G-lazy
+      CTIM                        20/20           18/20           18/20
+      CTIM-G                      18/20           20/20          20/20*
+      CTIM-G-lazy                 18/20          20/20*           20/20
+      (* = identical set)
+
+========================================================================================
+[C] COMPLEXITY -- textbook cost, and the primitive that dominates it
+========================================================================================
+  n=|V|=30358  m=|E|=99846  K=20  C=100  h_sel=0.1
+  t = mean |MIIA(v,h)|; each arborescence is a Dijkstra on -ln pp,
+  costing O(t log t).  So (count, mean size) IS the empirical cost.
+
+  CTIM
+      cost : O(nC)  Eq (19)  +  sum_c O(n_c * t_c log t_c)  init  +  O(CK) DP cells
+      why  : n arborescences, each on an INDUCED subgraph -> t_c is small
+      wall clock: 2.46s
+
+  CTIM-G
+      cost : O(n * t log t)  global init  +  sum_c O(n_c * t log t)  curves  +  O(C K^2) DP  +  O(K * t^2) realisation
+      why  : n arborescences, each on the FULL graph -> t is the global mean
+      MEASURED: 35651 arborescences built, mean size 2.3
+      MEASURED: 4619 curve gain evals, 128 realisation gain evals
+      MEASURED: 2000 curve points built
+      wall clock: 10.23s
+
+  CTIM-G-lazy
+      cost : O(n * t log t)  global init  +  O(K log C)  community heap  +  curve points built only on demand  +  O(K * t^2) realisation
+      why  : same objective and split as CTIM-G; builds ~K curve points, not ~C*K
+      MEASURED: 33633 arborescences built, mean size 2.4
+      MEASURED: 184 curve gain evals, 128 realisation gain evals
+      MEASURED: 20 curve points built
+      wall clock: 4.75s
+
+
+  item 535 done in 30.22s   (Eq (12) weights 1.69s, shared by every method)
+
+========================================================================================
+[A] ACROSS ITEMS -- relative gaps only
+========================================================================================
+  I_h_eval is not comparable across items (different pp = different
+  graph).  Only the within-item gap vs the first method transfers.
+
+  method                item 2369     item 1113      item 535
+  CTIM                  761.4040      761.5153      761.6496 
+  CTIM-G                763.8906      764.0019      764.1362 
+  CTIM-G-lazy           763.8906      764.0019      764.1362 
+
+  method            mean gap%         sd        min        max
+  CTIM                   0.00       0.00       0.00       0.00
+  CTIM-G                 0.33       0.00       0.33       0.33
+  CTIM-G-lazy            0.33       0.00       0.33       0.33
+
+  A gap whose sd across items is comparable to its mean is not
+  established -- report the range, not just the mean.
+
+========================================================================================
+TOTAL 128.10s   for 3 item(s)
+========================================================================================

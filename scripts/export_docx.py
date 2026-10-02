@@ -115,6 +115,17 @@ def msup(base, sup):
     return "<m:sSup><m:e>%s</m:e><m:sup>%s</m:sup></m:sSup>" % (base, sup)
 
 
+def msubsup(base, sub, sup):
+    """One base carrying BOTH a subscript and a superscript, e.g. S_m^(j).
+
+    Chaining msub(...) + msup("", ...) instead produces a superscript whose base
+    is empty, and Word renders an empty slot as a placeholder box.  This is the
+    only correct construct for a symbol with two attachments.
+    """
+    return ("<m:sSubSup><m:e>%s</m:e><m:sub>%s</m:sub><m:sup>%s</m:sup>"
+            "</m:sSubSup>" % (base, sub, sup))
+
+
 def mfrac(num, den):
     return "<m:f><m:num>%s</m:num><m:den>%s</m:den></m:f>" % (num, den)
 
@@ -153,6 +164,16 @@ def mfunc(name, arg):
     return mr(name, plain=True) + mdel(arg)
 
 
+def minline(omml):
+    """Math set INLINE in a running paragraph, not as a display equation.
+
+    ``equation()`` wraps its argument in ``m:oMathPara``, which is block-level
+    and forces its own line.  An algorithm line like "for c = 1 … C do" needs the
+    math to sit between two ordinary runs, which is what a bare ``m:oMath`` does.
+    """
+    return "<m:oMath>%s</m:oMath>" % omml
+
+
 def equation(omml, tag=None):
     """A centred display equation, optionally with a right-aligned (Eq n) tag."""
     body = ('<m:oMathPara><m:oMathParaPr><m:jc m:val="center"/></m:oMathParaPr>'
@@ -160,7 +181,8 @@ def equation(omml, tag=None):
     p = ('<w:p><w:pPr><w:spacing w:before="80" w:after="140"/>'
          '<w:jc w:val="center"/></w:pPr>%s</w:p>' % body)
     if tag:
-        p += para(run(tag, italic=True, size=9), align="center", spacing_after=160)
+        # Right-aligned equation number, the usual convention in a paper.
+        p += para(run(tag, size=9), align="right", spacing_after=160)
     return p
 
 
@@ -255,6 +277,7 @@ def write_docx(path, body_xml):
           '<Default Extension="xml" ContentType="application/xml"/>'
           '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
           '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
+          '<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>'
           "</Types>")
     root = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
             '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
@@ -263,7 +286,17 @@ def write_docx(path, body_xml):
     drels = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
              '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
              '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/'
-             'relationships/styles" Target="styles.xml"/></Relationships>')
+             'relationships/styles" Target="styles.xml"/>'
+             '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+             'relationships/settings" Target="settings.xml"/></Relationships>')
+
+    # Word's default math justification is centerGroup, which centres any
+    # paragraph whose only content is an m:oMath -- exactly the pseudocode lines
+    # that are pure formula.  defJc=left is the only thing that stops it; a
+    # paragraph-level w:jc does not override the math group.
+    settings = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                "<w:settings %s %s><m:mathPr><m:defJc m:val=\"left\"/>"
+                "</m:mathPr></w:settings>" % (W, M))
     doc = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
            "<w:document %s %s %s><w:body>%s%s</w:body></w:document>"
            % (W, M, R, body_xml, _SECT))
@@ -276,6 +309,7 @@ def write_docx(path, body_xml):
         z.writestr("_rels/.rels", root)
         z.writestr("word/_rels/document.xml.rels", drels)
         z.writestr("word/styles.xml", _STYLES)
+        z.writestr("word/settings.xml", settings)
         z.writestr("word/document.xml", doc)
 
 
