@@ -1,0 +1,3657 @@
+<title>CTIM-G vs CTIM-GL</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  /* Design plan: an engineering lab report. Cool paper green-grey, ink green-black,
+     two signal colours (amber = CTIM-G, teal = CTIM-GL), Archivo for display,
+     Source Serif 4 for reading, IBM Plex Mono for data. The centrepiece is a
+     side-by-side race over a 100x20 grid of curve points. */
+
+  :root {
+    --bg: #f4f7f3;
+    --surface: #fbfcf9;
+    --surface-2: #e9efe8;
+    --ink: #16211c;
+    --ink-2: #33443b;
+    --muted: #5d6d64;
+    --rule: #cbd7ce;
+    --rule-soft: #dde5de;
+    --g: #b45309;
+    --gl: #078a7a;
+    --g-fill: #8a3e07;
+    --gl-fill: #056b5f;
+    --on-series: #ffffff;
+    --phase-rest: #c9d4cb;
+    --phase-rest-2: #aebdb2;
+    --grid-line: rgba(22, 33, 28, 0.06);
+    --grid-ghost: rgba(22, 33, 28, 0.1);
+    --pulse-ring: rgba(7, 138, 122, 0.38);
+    --shadow: 0 1px 0 rgba(22, 33, 28, 0.04), 0 18px 44px -32px rgba(22, 33, 28, 0.42);
+    --font-display: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+    --max: 1160px;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1512;
+      --surface: #151d19;
+      --surface-2: #1b2621;
+      --ink: #e8efe9;
+      --ink-2: #c5d2c9;
+      --muted: #9aafa3;
+      --rule: #2b3a31;
+      --rule-soft: #223028;
+      --g: #c97f1c;
+      --gl: #18a090;
+      --g-fill: #c97f1c;
+      --gl-fill: #18a090;
+      --on-series: #0b1210;
+      --phase-rest: #2d3c33;
+      --phase-rest-2: #3c4e42;
+      --grid-line: rgba(232, 239, 233, 0.06);
+      --grid-ghost: rgba(232, 239, 233, 0.1);
+      --pulse-ring: rgba(24, 160, 144, 0.4);
+      --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 18px 44px -30px rgba(0, 0, 0, 0.9);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0f1512;
+    --surface: #151d19;
+    --surface-2: #1b2621;
+    --ink: #e8efe9;
+    --ink-2: #c5d2c9;
+    --muted: #9aafa3;
+    --rule: #2b3a31;
+    --rule-soft: #223028;
+    --g: #c97f1c;
+    --gl: #18a090;
+    --g-fill: #c97f1c;
+    --gl-fill: #18a090;
+    --on-series: #0b1210;
+    --phase-rest: #2d3c33;
+    --phase-rest-2: #3c4e42;
+    --grid-line: rgba(232, 239, 233, 0.06);
+    --grid-ghost: rgba(232, 239, 233, 0.1);
+    --pulse-ring: rgba(24, 160, 144, 0.4);
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 18px 44px -30px rgba(0, 0, 0, 0.9);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  [hidden] { display: none !important; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 0.96rem + 0.2vw, 1.08rem);
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 40;
+    background: var(--bg);
+  }
+
+  a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--ink); text-decoration-color: var(--gl); }
+  button, input { font: inherit; }
+  button { color: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--gl);
+    outline-offset: 3px;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: var(--max);
+    margin-inline: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .topbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 30;
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .topbar__inner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: 58px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex: 0 0 auto;
+  }
+
+  .brand__mark {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 28px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+  }
+
+  .brand__text {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-left: auto;
+  }
+
+  .nav a {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--muted);
+  }
+
+  .nav a:hover { color: var(--ink); }
+
+  .theme-toggle {
+    flex: 0 0 auto;
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .theme-toggle:hover { background: var(--surface-2); }
+  .theme-toggle svg { width: 15px; height: 15px; display: block; }
+
+  .hero {
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+    mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+  }
+
+  .hero__inner {
+    position: relative;
+    padding-top: clamp(56px, 9vw, 116px);
+    padding-bottom: clamp(44px, 6vw, 76px);
+  }
+
+  .eyebrow {
+    margin: 0 0 18px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .uc-off { text-transform: none; }
+  .nowrap { white-space: nowrap; }
+
+  .hero h1 {
+    max-width: 18ch;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.7rem, 6.4vw, 5.5rem);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+
+  .hero h1 .hl { color: var(--gl); }
+
+  .lede {
+    max-width: 62ch;
+    margin: 26px 0 0;
+    font-size: clamp(1.05rem, 1rem + 0.3vw, 1.2rem);
+    line-height: 1.62;
+    color: var(--ink-2);
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: clamp(36px, 5vw, 54px);
+    border-top: 1px solid var(--rule);
+  }
+
+  .fact { padding: 18px 26px 0 0; min-width: 0; }
+  .fact + .fact { padding-left: 26px; border-left: 1px solid var(--rule); }
+
+  .fact__value {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: clamp(1.3rem, 2.3vw, 1.95rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .fact__value .arrow { color: var(--muted); font-weight: 400; }
+
+  .fact__label {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    line-height: 1.5;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .chip {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+    transform: translateY(-1px);
+  }
+  .chip--g { background: var(--g); }
+  .chip--gl { background: var(--gl); }
+
+  .section {
+    border-top: 1px solid var(--rule);
+    padding-block: clamp(48px, 7vw, 96px);
+    scroll-margin-top: calc(58px + env(safe-area-inset-top, 0px) + 16px);
+  }
+
+  .section-head {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 12px 44px;
+    margin-bottom: clamp(28px, 4vw, 46px);
+  }
+
+  .section-head > .eyebrow { margin: 4px 0 0; }
+
+  .section-head__body { min-width: 0; }
+
+  .section h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3.4vw, 2.7rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .sub {
+    max-width: 64ch;
+    margin: 12px 0 0;
+    color: var(--ink-2);
+    font-size: 1.01rem;
+  }
+
+  .prose p { max-width: 64ch; margin: 0 0 14px; }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose h3, .subhead {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: 1.06rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .prose code, .note code, .footer code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--surface-2);
+    border-radius: 2px;
+    padding: 1px 5px;
+  }
+
+  .subhead {
+    margin-top: clamp(36px, 5vw, 56px);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .subhead small {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* ---------------- race ---------------- */
+
+  .race {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .race__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .seg {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+    background: var(--surface-2);
+    flex: 0 0 auto;
+  }
+
+  .seg__btn {
+    border: 0;
+    border-right: 1px solid var(--rule);
+    background: transparent;
+    color: var(--muted);
+    padding: 7px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+  }
+  .seg__btn:last-child { border-right: 0; }
+  .seg__btn:hover { color: var(--ink); }
+  .seg__btn.is-active { background: var(--ink); color: var(--bg); }
+
+  .race__meta {
+    flex: 1 1 240px;
+    min-width: 0;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .btn {
+    flex: 0 0 auto;
+    border: 1px solid var(--ink);
+    border-radius: 3px;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 8px 13px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+  }
+  .btn:hover { background: var(--surface-2); color: var(--ink); }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+  .btn:disabled:hover { background: var(--ink); color: var(--bg); }
+
+  .race__ticker {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 18px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--muted);
+  }
+
+  .race__ticker > span:nth-child(2) { min-width: 0; }
+
+  .race__clock {
+    margin-left: auto;
+    color: var(--ink);
+    font-size: 0.86rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gl);
+    flex: 0 0 auto;
+  }
+
+  .race__ticker.is-running .pulse { animation: pulse 1.25s ease-out infinite; }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 var(--pulse-ring); }
+    70% { box-shadow: 0 0 0 7px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+
+  .lanes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lane {
+    min-width: 0;
+    padding: clamp(16px, 2.2vw, 26px);
+  }
+  .lane + .lane { border-left: 1px solid var(--rule); }
+
+  .lane__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 13px;
+  }
+
+  .lane__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.12rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+    display: inline-block;
+  }
+  .dot--g { background: var(--g); }
+  .dot--gl { background: var(--gl); }
+
+  .lane__sub {
+    margin: 3px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .lane__time {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .lane__flag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 5px 2px;
+    border-radius: 2px;
+    background: var(--gl-fill);
+    color: var(--on-series);
+    font-size: 0.54rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    vertical-align: 1px;
+  }
+  .lane--g .lane__flag { background: var(--g-fill); }
+
+  .grid-wrap { margin: 0 0 13px; }
+
+  .grid-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.57rem;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+
+  .grid {
+    display: block;
+    width: 100%;
+    aspect-ratio: 5 / 1;
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 2px;
+  }
+
+  .grid-note {
+    margin: 5px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.59rem;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .lane__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    padding-top: 11px;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .lane__stats > div { min-width: 0; }
+
+  .lane__stats span {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: clamp(0.86rem, 1.4vw, 1.06rem);
+    font-weight: 500;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .lane__stats small {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.52rem;
+    line-height: 1.35;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .phase-line {
+    height: 3px;
+    margin-top: 13px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .phase-line__fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--g);
+    transition: width 0.1s linear;
+  }
+  .lane--gl .phase-line__fill { background: var(--gl); }
+
+  .lane__phase {
+    min-height: 1.3em;
+    margin: 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.59rem;
+    color: var(--muted);
+  }
+
+  .race__caption {
+    margin: 0;
+    padding: 11px 18px 15px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(28px, 5vw, 56px);
+    align-items: start;
+    margin-top: clamp(36px, 5vw, 56px);
+  }
+
+  .code-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .code-card {
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .code-card__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .code-card pre {
+    margin: 0;
+    padding: 13px 14px 15px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    line-height: 1.72;
+    color: var(--ink);
+    tab-size: 4;
+  }
+
+  .code-card .cm { color: var(--muted); }
+  .code-card .hi { color: var(--ink); font-weight: 600; }
+
+  .note {
+    max-width: 72ch;
+    margin: 20px 0 0;
+    padding: 14px 16px;
+    border-left: 2px solid var(--rule);
+    background: var(--surface-2);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .note strong { color: var(--ink); }
+
+  /* ---------------- formula / stages ---------------- */
+
+  .stage {
+    padding-block: clamp(24px, 4vw, 36px);
+    border-top: 1px solid var(--rule);
+  }
+  .stage:first-of-type { border-top: 0; padding-top: 0; }
+
+  .stage__head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin-bottom: 18px;
+  }
+
+  .stage__kicker {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .stage__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  .stage__tag { margin-left: auto; }
+
+  .stage__cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(24px, 4vw, 44px);
+    align-items: start;
+  }
+
+  .stage__col { min-width: 0; }
+
+  .stage__col-label {
+    margin: 0 0 10px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .stage__col-label--new { color: var(--ink-2); }
+
+  .stage__note {
+    margin: 12px 0 0;
+    font-size: 0.86rem;
+    line-height: 1.62;
+    color: var(--ink-2);
+  }
+  .stage__note strong { color: var(--ink); }
+  .stage__note code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--surface-2);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 7px 3px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.54rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .tag--keep { border-color: var(--rule); color: var(--ink-2); }
+  .tag--change { border-color: var(--gl); color: var(--ink); }
+  .tag--drop { border-color: var(--rule-soft); color: var(--muted); }
+
+  .math {
+    font-family: var(--font-body);
+    font-size: clamp(0.96rem, 0.9rem + 0.2vw, 1.08rem);
+    line-height: 2.1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .math var { font-style: italic; font-family: var(--font-body); }
+  .math .op { font-style: normal; padding: 0 0.16em; }
+  .math .opname { font-style: normal; }
+  .math sub, .math sup { font-size: 0.62em; line-height: 0; }
+  .math sub { vertical-align: -0.28em; }
+  .math sup { vertical-align: 0.48em; }
+
+  .math .setb {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+  }
+  .math .setb__brace {
+    font-size: 2.5em;
+    font-weight: 300;
+    line-height: 0.72;
+    color: var(--muted);
+    font-style: normal;
+  }
+  .math .setb__body { padding: 0 0.18em; }
+
+  .math .maxop {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    margin: 0 0.18em;
+    line-height: 1.1;
+  }
+  .math .maxop .lim {
+    font-size: 0.56em;
+    line-height: 1.25;
+    white-space: nowrap;
+    color: var(--ink-2);
+  }
+  .math .maxop .opname { line-height: 1.1; }
+
+  .eq {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .eq__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 7px 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .eq__num {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+  }
+
+  .lazy-ui {
+    margin: 0 0 14px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .lazy-ui__line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 12px;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1.5;
+  }
+  .lazy-ui__line:first-child { border-top: 0; }
+  .lazy-ui__line code { font-family: var(--font-mono); color: var(--ink); }
+  .lazy-ui__line span { color: var(--muted); white-space: nowrap; }
+
+  .pseudo {
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    border: 1px solid var(--rule-soft);
+    border-radius: 3px;
+    background: var(--surface-2);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.69rem;
+    line-height: 1.75;
+    color: var(--ink);
+  }
+  .pseudo .cm { color: var(--muted); }
+  .pseudo .hi { font-weight: 600; }
+
+  .map-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+  }
+
+  .map-table th {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    vertical-align: bottom;
+  }
+
+  .map-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .map-table td:first-child {
+    width: 64px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .map-table td:nth-child(2),
+  .map-table td:nth-child(3) {
+    font-family: var(--font-body);
+    color: var(--ink);
+  }
+
+  .map-table .math { font-size: 0.92rem; line-height: 1.8; }
+  .map-table .tag { vertical-align: 1px; }
+
+  .alloc-demo {
+    margin-top: clamp(30px, 4vw, 44px);
+    padding: clamp(16px, 2.4vw, 24px);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .alloc-demo__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px 24px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .alloc-demo__head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.06rem;
+    font-weight: 700;
+  }
+
+  .alloc-demo__head p {
+    max-width: 64ch;
+    margin: 4px 0 0;
+    font-size: 0.88rem;
+    line-height: 1.58;
+    color: var(--ink-2);
+  }
+
+  .alloc-demo__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(18px, 3vw, 30px);
+    margin-top: 18px;
+  }
+
+  .alloc-panel { min-width: 0; }
+
+  .alloc-panel__title {
+    margin: 0 0 8px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .dp-wrap { overflow-x: auto; }
+
+  .dp-table {
+    width: 100%;
+    min-width: 500px;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dp-table th,
+  .dp-table td {
+    border: 1px solid var(--rule-soft);
+    padding: 5px 6px;
+    text-align: center;
+  }
+
+  .dp-table thead th {
+    font-size: 0.55rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--surface-2);
+  }
+
+  .dp-table tbody th {
+    text-align: left;
+    font-weight: 500;
+    white-space: nowrap;
+    background: var(--surface-2);
+  }
+
+  .dp-table td { color: var(--ink-2); }
+
+  .dp-table td.is-path {
+    color: var(--ink);
+    background: var(--surface-2);
+    box-shadow: inset 0 0 0 1.5px var(--gl);
+  }
+
+  .dp-table td small {
+    display: block;
+    margin-top: 1px;
+    font-size: 0.46rem;
+    color: var(--muted);
+  }
+
+  .dp-note {
+    margin: 8px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.57rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .comm-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .comm {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) 48px;
+    gap: 9px;
+    align-items: end;
+    padding: 5px 6px;
+    border-radius: 2px;
+    transition: background 0.15s ease;
+  }
+  .comm.is-active { background: var(--surface-2); }
+
+  .comm__name {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--muted);
+    align-self: center;
+  }
+
+  .comm__count {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--muted);
+    text-align: right;
+    align-self: center;
+    white-space: nowrap;
+  }
+
+  .bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 52px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .bar {
+    flex: 1;
+    height: var(--h);
+    min-height: 2px;
+    background: var(--surface-2);
+    border-radius: 2px 2px 0 0;
+    transition: background 0.18s ease, outline-color 0.18s ease;
+  }
+  .bar.is-done { background: var(--gl); }
+  .bar.is-next { outline: 1.5px dashed var(--gl); outline-offset: -1px; }
+
+  .steps {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+  }
+
+  .steps li {
+    display: grid;
+    grid-template-columns: 18px 16px 1fr auto;
+    gap: 8px;
+    align-items: baseline;
+    padding: 4px 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .steps li:first-child { border-top: 0; }
+  .steps li.is-new { animation: step-in 0.3s ease; }
+  @keyframes step-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
+  }
+  .steps b { font-weight: 600; color: var(--ink); }
+  .steps em { font-style: normal; color: var(--gl); }
+  .steps small { color: var(--muted); text-align: right; white-space: nowrap; }
+
+  .alloc-result {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--ink-2);
+  }
+  .alloc-result strong { color: var(--ink); font-size: 0.78rem; }
+
+  .alloc-badge {
+    margin-left: auto;
+    padding: 1px 6px 2px;
+    border: 1px solid var(--gl);
+    border-radius: 999px;
+    font-size: 0.54rem;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+
+  .rewrite {
+    margin-top: clamp(30px, 4vw, 44px);
+    padding: 16px 18px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+  }
+
+  .rewrite__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .rewrite__head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .rewrite p {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    line-height: 1.62;
+    color: var(--ink-2);
+  }
+  .rewrite p:last-of-type { margin-bottom: 0; }
+  .rewrite strong { color: var(--ink); }
+  .rewrite code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--surface-2);
+    padding: 1px 4px;
+    border-radius: 2px;
+  }
+
+  .rewrite-actions { margin-top: 12px; }
+  .btn--small { padding: 6px 10px; font-size: 0.62rem; }
+
+  .notation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 30px;
+    margin: 16px 0 0;
+  }
+
+  .notation > div {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .notation dt {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 0.94rem;
+    color: var(--ink);
+  }
+
+  .notation dd {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+
+  .algo {
+    margin-top: 12px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+    overflow-x: auto;
+  }
+
+  .algo__head {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--rule);
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .algo pre {
+    margin: 0;
+    padding: 12px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+
+  .algo .ln {
+    display: inline-block;
+    width: 2.2em;
+    color: var(--muted);
+    user-select: none;
+  }
+
+  .algo .kw { font-weight: 600; }
+  .algo .cm { color: var(--muted); }
+
+  .paper-lemma {
+    margin: 18px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule-soft);
+  }
+  .paper-lemma:first-of-type { border-top: 0; padding-top: 0; }
+  .paper-lemma h4 {
+    margin: 0 0 6px;
+    font-family: var(--font-display);
+    font-size: 0.94rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .paper-lemma p { margin: 0; max-width: 72ch; font-size: 0.91rem; line-height: 1.68; color: var(--ink-2); }
+  .paper-lemma p + p { margin-top: 8px; }
+
+  .complexity-table { min-width: 620px; }
+  .complexity-table td:nth-child(2),
+  .complexity-table td:nth-child(3) { font-family: var(--font-mono); font-size: 0.72rem; }
+
+  /* ---------------- match / tables ---------------- */
+
+  .match-panel {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 28px 40px;
+    align-items: center;
+    margin-bottom: clamp(26px, 4vw, 38px);
+    padding: 22px 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .match-big strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: clamp(3.6rem, 7vw, 6rem);
+    font-weight: 800;
+    line-height: 0.86;
+    letter-spacing: -0.055em;
+  }
+  .match-big strong span {
+    color: var(--muted);
+    font-size: 0.4em;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .match-big p {
+    max-width: 25ch;
+    margin: 10px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    line-height: 1.55;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .match-groups {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .match-group { min-width: 0; }
+
+  .match-squares { display: flex; gap: 4px; margin-bottom: 6px; }
+
+  .sq {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    background: var(--gl);
+    flex: 0 0 auto;
+  }
+
+  .match-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid var(--rule);
+  }
+
+  .data-table {
+    width: 100%;
+    min-width: 540px;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .data-table th {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.58rem;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+
+  .data-table th:first-child { text-align: left; }
+  .data-table th .th-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.52rem;
+    letter-spacing: 0.03em;
+    text-transform: none;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .data-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 0.76rem;
+    line-height: 1.45;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .data-table td:first-child {
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .data-table tbody tr:hover { background: var(--surface-2); }
+  .data-table tbody tr.is-noise td { color: var(--muted); }
+
+  .data-table tfoot td {
+    border-bottom: 0;
+    border-top: 1px solid var(--rule);
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .data-table .arrow { color: var(--muted); margin: 0 4px; }
+
+  .same-pill {
+    display: inline-block;
+    padding: 1px 6px 2px;
+    border: 1px solid var(--gl);
+    border-radius: 999px;
+    color: var(--ink);
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+  }
+
+  .table-note {
+    max-width: 82ch;
+    margin: 12px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .table-note strong { color: var(--ink-2); font-weight: 500; }
+
+  /* ---------------- speed chart ---------------- */
+
+  .chart {
+    margin: 0;
+    padding-top: 4px;
+  }
+
+  .chart__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .chart__head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .chart__head p {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+
+  .bar-scale, .bar-row {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) 62px;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .bar-scale {
+    margin-bottom: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.56rem;
+    color: var(--muted);
+  }
+
+  .bar-scale__track {
+    position: relative;
+    height: 14px;
+  }
+
+  .bar-scale__track span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .bar-scale__track span:first-child { transform: none; }
+  .bar-scale__track span:last-child { transform: translateX(-100%); }
+
+  .bar-chart { display: flex; flex-direction: column; }
+
+  .bar-row {
+    padding: 5px 0;
+    border-radius: 2px;
+  }
+
+  .bar-row:hover, .bar-row:focus-visible { background: var(--surface-2); }
+
+  .bar-row__label {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .bar-row__label em {
+    display: block;
+    font-family: var(--font-mono);
+    font-style: normal;
+    font-size: 0.54rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+  }
+
+  .bar-row__track {
+    position: relative;
+    height: 18px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .bar-row__bar {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 0 4px 4px 0;
+    background: var(--gl);
+  }
+
+  .bar-row.is-noise .bar-row__bar { opacity: 0.42; }
+
+  .bar-row__ref {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1px dashed var(--muted);
+    opacity: 0.8;
+  }
+
+  .bar-row__value {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------------- phase bars ---------------- */
+
+  .phase-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 40px;
+  }
+
+  .phase-fig { margin: 0; min-width: 0; }
+
+  .phase-fig__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+
+  .phase-fig__name {
+    font-family: var(--font-display);
+    font-size: 0.94rem;
+    font-weight: 700;
+  }
+
+  .phase-fig__total {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .phase-row {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) 60px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 7px;
+  }
+
+  .phase-row__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    white-space: nowrap;
+    color: var(--ink-2);
+  }
+
+  .phase-row__track {
+    position: relative;
+    height: 24px;
+    background: var(--surface-2);
+    border-radius: 2px;
+  }
+
+  .phase-bar {
+    display: flex;
+    height: 100%;
+    border-radius: 0 3px 3px 0;
+    overflow: hidden;
+  }
+
+  .phase-seg {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .phase-seg + .phase-seg { border-left: 2px solid var(--bg); }
+
+  .phase-seg--g { background: var(--g-fill); }
+  .phase-seg--gl { background: var(--gl-fill); }
+  .phase-seg--rest { background: var(--phase-rest); }
+
+  .phase-seg > span {
+    padding-right: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--on-series);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .phase-row__total {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-align: right;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .phase-axis {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) 60px;
+    gap: 10px;
+    margin-top: 3px;
+  }
+
+  .phase-axis__track {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 0.54rem;
+    color: var(--muted);
+  }
+
+  .phase-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 20px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--muted);
+  }
+
+  .phase-legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .key {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+  }
+  .key--g { background: var(--g-fill); }
+  .key--gl { background: var(--gl-fill); }
+  .key--rest { background: var(--phase-rest); }
+
+  .callout {
+    margin-top: clamp(32px, 4vw, 44px);
+    padding-top: 16px;
+    border-top: 2px solid var(--gl);
+    max-width: 74ch;
+  }
+
+  .callout__label {
+    margin: 0 0 8px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .callout p:last-child { margin: 0; color: var(--ink-2); }
+
+  /* ---------------- limits ---------------- */
+
+  .limits-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(28px, 5vw, 56px);
+    align-items: start;
+  }
+
+  .caveats {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .caveats li {
+    position: relative;
+    margin: 0;
+    padding: 13px 0 13px 20px;
+    border-top: 1px solid var(--rule-soft);
+    font-size: 0.92rem;
+    line-height: 1.62;
+    color: var(--ink-2);
+  }
+  .caveats li:last-child { border-bottom: 1px solid var(--rule-soft); }
+  .caveats li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 21px;
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    background: var(--gl);
+  }
+  .caveats strong { color: var(--ink); font-weight: 600; }
+
+  .use-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .use-card {
+    padding: 16px 18px 18px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+  }
+
+  .use-card__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .use-card h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .use-card__tag {
+    margin-left: auto;
+    padding: 1px 6px 2px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.53rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .use-card p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.58;
+    color: var(--ink-2);
+  }
+
+  .footer {
+    border-top: 1px solid var(--rule);
+    padding-block: 26px 32px;
+  }
+
+  .footer__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .footer p {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .footer__brand {
+    margin-bottom: 4px !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink) !important;
+  }
+
+  .tooltip {
+    position: fixed;
+    z-index: 60;
+    max-width: 250px;
+    padding: 6px 9px;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    line-height: 1.5;
+    color: var(--ink);
+    pointer-events: none;
+  }
+
+  @media (max-width: 900px) {
+    .section-head { grid-template-columns: 1fr; gap: 6px; }
+    .section-head > .eyebrow { margin: 0 0 6px; }
+    .two-col { grid-template-columns: 1fr; }
+    .limits-grid { grid-template-columns: 1fr; }
+    .phase-grid { grid-template-columns: 1fr; }
+    .match-panel { grid-template-columns: 1fr; }
+    .match-groups { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .stage__cols { grid-template-columns: 1fr; }
+    .alloc-demo__grid { grid-template-columns: 1fr; }
+    .notation { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 760px) {
+    .nav { display: none; }
+    .brand__text { display: none; }
+    .lanes { grid-template-columns: 1fr; }
+    .lane + .lane { border-left: 0; border-top: 1px solid var(--rule); }
+    .facts { grid-template-columns: 1fr; }
+    .fact { padding: 14px 0 0; }
+    .fact + .fact { padding-left: 0; border-left: 0; border-top: 1px solid var(--rule-soft); margin-top: 14px; }
+    .match-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bar-scale, .bar-row { grid-template-columns: 88px minmax(0, 1fr) 52px; gap: 10px; }
+    .phase-row, .phase-axis { grid-template-columns: 64px minmax(0, 1fr) 54px; gap: 8px; }
+    .phase-row__label { font-size: 0.55rem; }
+    .phase-row__total { font-size: 0.6rem; }
+    .phase-seg > span { font-size: 0.54rem; padding-right: 4px; }
+    .tooltip { display: none; }
+    .stage__tag { margin-left: 0; }
+    .map-table { min-width: 680px; }
+  }
+
+  @media (max-width: 460px) {
+    .hero h1 { font-size: clamp(2.35rem, 11vw, 3.2rem); }
+    .race__head { padding: 12px 14px; }
+    .race__meta { flex-basis: 100%; order: 3; }
+    .btn { margin-left: auto; }
+    .lane { padding: 16px 14px 18px; }
+    .lane__stats span { font-size: 0.9rem; }
+    .lane__stats small { font-size: 0.48rem; }
+    .data-table { min-width: 500px; }
+    .bar-scale__track span:nth-child(2) { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="#top" aria-label="Về đầu trang">
+      <span class="brand__mark" aria-hidden="true">G/GL</span>
+      <span class="brand__text">CTIM · so sánh biến thể</span>
+    </a>
+    <nav class="nav" aria-label="Mục lục">
+      <a href="#co-che">Cơ chế</a>
+      <a href="#cong-thuc">Thuật toán</a>
+      <a href="#ket-qua">Kết quả</a>
+      <a href="#toc-do">Tốc độ</a>
+      <a href="#chi-phi">Chi phí</a>
+      <a href="#gioi-han">Giới hạn</a>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Chuyển sang giao diện tối">
+      <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+      <svg id="iconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap hero__inner">
+      <p class="eyebrow">K = 20 · <span class="uc-off">h = 0,1</span> · C = 100 · 5 tập dữ liệu · 15 sản phẩm</p>
+      <h1>Cùng một tập hạt giống. <span class="hl">Bớt <span class="nowrap">97–99%</span> đường cong.</span></h1>
+      <p class="lede">
+        CTIM-GL là CTIM-G với đường cong lười. Nó không dựng đủ 100 đường cong rồi mới chia ngân sách.
+        Nó chỉ dựng đúng những điểm mà phép chia dùng tới, rồi trả về cùng một tập hạt giống.
+      </p>
+      <div class="facts">
+        <div class="fact">
+          <span class="fact__value">15/15</span>
+          <span class="fact__label">sản phẩm trùng tập hạt giống</span>
+        </div>
+        <div class="fact">
+          <span class="fact__value"><span class="chip chip--g" aria-hidden="true"></span>2.000 <span class="arrow">→</span> <span class="chip chip--gl" aria-hidden="true"></span>20</span>
+          <span class="fact__label">điểm đường cong, Digg</span>
+        </div>
+        <div class="fact">
+          <span class="fact__value">2,02×</span>
+          <span class="fact__label">nhanh hơn trên Digg</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="co-che">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Cơ chế</p>
+        <div class="section-head__body">
+          <h2>Hai đường ống, một kết quả</h2>
+          <p class="sub">
+            CTIM-G dựng toàn bộ đường cong của 100 cộng đồng rồi quy hoạch động để chia 20 hạt giống.
+            CTIM-GL giữ một heap các cộng đồng, mỗi bước chỉ dựng điểm kế tiếp của cộng đồng đang dẫn đầu.
+          </p>
+        </div>
+      </div>
+
+      <div class="race" aria-labelledby="raceTitle">
+        <h2 class="sr-only" id="raceTitle">Mô phỏng cuộc đua dựng đường cong giữa CTIM-G và CTIM-GL</h2>
+        <div class="race__head">
+          <div class="seg" role="group" aria-label="Chọn tập dữ liệu">
+            <button class="seg__btn is-active" type="button" data-ds="digg" aria-pressed="true">Digg</button>
+            <button class="seg__btn" type="button" data-ds="epinions" aria-pressed="false">Epinions</button>
+          </div>
+          <p class="race__meta" id="raceMeta">30.358 nút · 99.846 cạnh · 2/100 cộng đồng được dùng</p>
+          <button class="btn" id="runBtn" type="button">Chạy lại mô phỏng</button>
+        </div>
+
+        <div class="race__ticker" id="ticker">
+          <span class="pulse" aria-hidden="true"></span>
+          <span id="tickerText">Kết quả cuối · Digg</span>
+          <span class="race__clock"><span id="clock">9,90 s</span></span>
+        </div>
+
+        <div class="lanes">
+          <article class="lane lane--g" data-method="g">
+            <header class="lane__head">
+              <div>
+                <h3 class="lane__title"><span class="dot dot--g" aria-hidden="true"></span>CTIM-G</h3>
+                <p class="lane__sub">dựng toàn bộ đường cong, rồi DP</p>
+              </div>
+              <span class="lane__time"><span data-elapsed>9,90</span> s<span class="lane__flag" data-flag hidden>về đích</span></span>
+            </header>
+            <div class="grid-wrap">
+              <div class="grid-label"><span>100 cộng đồng →</span><span>20 điểm / cộng đồng</span></div>
+              <canvas class="grid" id="gridG" role="img" aria-label="Lưới 100 cộng đồng nhân 20 điểm. CTIM-G dựng toàn bộ 2.000 điểm."></canvas>
+              <p class="grid-note" data-note-g>tổng 2.000 điểm trên 100 cộng đồng</p>
+            </div>
+            <div class="lane__stats">
+              <div><span data-points>2.000</span><small>điểm đường cong</small></div>
+              <div><span data-evals>4.620</span><small>lần tính lợi ích</small></div>
+              <div><span data-total>9,90 s</span><small>thời gian</small></div>
+            </div>
+            <div class="phase-line" aria-hidden="true"><span class="phase-line__fill" data-fill style="width:100%"></span></div>
+            <p class="lane__phase" data-phase>xong</p>
+          </article>
+
+          <article class="lane lane--gl" data-method="gl">
+            <header class="lane__head">
+              <div>
+                <h3 class="lane__title"><span class="dot dot--gl" aria-hidden="true"></span>CTIM-GL</h3>
+                <p class="lane__sub">heap: chỉ dựng điểm được chọn</p>
+              </div>
+              <span class="lane__time"><span data-elapsed>4,90</span> s<span class="lane__flag" data-flag>về đích</span></span>
+            </header>
+            <div class="grid-wrap">
+              <div class="grid-label"><span>100 cộng đồng →</span><span>20 điểm / cộng đồng</span></div>
+              <canvas class="grid" id="gridGL" role="img" aria-label="Lưới 100 cộng đồng nhân 20 điểm. CTIM-GL chỉ dựng 20 điểm ở 2 cộng đồng."></canvas>
+              <p class="grid-note" data-note-gl>tổng 20 điểm, ở 2/100 cộng đồng</p>
+            </div>
+            <div class="lane__stats">
+              <div><span data-points>20</span><small>điểm đường cong</small></div>
+              <div><span data-evals>185</span><small>lần tính lợi ích</small></div>
+              <div><span data-total>4,90 s</span><small>thời gian</small></div>
+            </div>
+            <div class="phase-line" aria-hidden="true"><span class="phase-line__fill" data-fill style="width:100%"></span></div>
+            <p class="lane__phase" data-phase>xong</p>
+          </article>
+        </div>
+
+        <p class="race__caption">
+          Mô phỏng theo tỉ lệ thời gian thực của từng tập, tua nhanh. Mỗi ô là một điểm đường cong.
+          Lưới mờ là 2.000 ô mà CTIM-GL không dựng; ô sáng là điểm thực sự được tính.
+        </p>
+      </div>
+
+      <div class="two-col">
+        <div class="prose">
+          <h3>Vì sao bỏ được bước DP</h3>
+          <p>
+            Hàm mục tiêu là submodular, nên lợi ích biên của mỗi hạt giống giảm dần. Đường cong của
+            một cộng đồng vì thế lõm. Trên các đường cong lõm, chia K hạt giống tối ưu tương đương với
+            cấp từng hạt một cho cộng đồng có điểm kế tiếp lớn nhất.
+          </p>
+          <p>
+            CTIM-GL làm đúng phép cấp đó bằng một heap. Nó nhìn điểm kế tiếp của từng cộng đồng, lấy
+            cộng đồng đang dẫn đầu, dựng đúng điểm đó, rồi đẩy lại với điểm sau. Sau K bước, phân bổ
+            nhận được trùng với phân bổ của DP đầy đủ.
+          </p>
+          <p class="note">
+            <strong>Ngoại lệ duy nhất là thế hoà tuyệt đối.</strong> Heap phá hoà theo nhãn cộng đồng
+            nhỏ hơn; DP phá hoà theo thứ tự quay lui khác. Hai cách có thể chia ngân sách khác nhau
+            nhưng cùng tổng giá trị. Trong 15 sản phẩm của trang này, không có thế hoà nào
+            dẫn tới hai phân bổ khác nhau.
+          </p>
+        </div>
+
+        <div class="code-stack" aria-label="Mã giả so sánh hai đường ống">
+          <div class="code-card">
+            <div class="code-card__head"><span class="dot dot--g" aria-hidden="true"></span>CTIM-G</div>
+            <pre><code><span class="cm"># dựng tất cả, rồi chia</span>
+for m in 100 communities:
+    curve[m] = greedy(m, K)   <span class="cm"># 2.000 điểm</span>
+alloc = exact_dp(curve, K)    <span class="cm"># O(C·K²)</span>
+s = realise(alloc)</code></pre>
+          </div>
+          <div class="code-card">
+            <div class="code-card__head"><span class="dot dot--gl" aria-hidden="true"></span>CTIM-GL</div>
+            <pre><code><span class="cm"># chỉ dựng điểm được chọn</span>
+heap = {m: next_gain(m)}      <span class="cm"># 100 khoá</span>
+repeat K times:
+    m = heap.pop_max()
+    commit_next_point(m)      <span class="hi"># 1 điểm</span>
+    heap.push(m, next_gain(m))
+s = realise(alloc_from(heap))</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="cong-thuc">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Thuật toán</p>
+        <div class="section-head__body">
+          <h2>CTIM-GL: đường cong lười và phân bổ bằng heap</h2>
+          <p class="sub">
+            CTIM-GL thay hai giai đoạn “dựng đủ đường cong rồi quy hoạch động” bằng một vòng lặp
+            heap: mỗi bước chọn cộng đồng có lợi ích biên kế tiếp lớn nhất và dựng đúng một điểm
+            đường cong.
+          </p>
+          <p class="table-note" style="margin-top:10px;">
+            Cấu trúc: 1 ký hiệu · 2 đường cong · 3 phân bổ · 4 realisation · 5 thuật toán ·
+            6 chứng minh · 7 độ phức tạp · 8 ví dụ · 9 đối chiếu Eq (11)–(16).
+          </p>
+        </div>
+      </div>
+
+      <h3 class="subhead">1. Ký hiệu và mục tiêu <small>đồ thị, cộng đồng, ngân sách</small></h3>
+      <div class="prose">
+        <p>
+          Cho đồ thị có hướng <span class="math"><var>𝒢</var> = (<var>𝒰</var>, <var>ℰ</var>)</span>,
+          <span class="math"><var>U</var> = |<var>𝒰</var>|</span>, hàm ảnh hưởng
+          <span class="math"><var>I</var>(·)</span> là MIA toàn cục tại ngưỡng <var>h</var>.
+          Ngân sách là <var>K</var> hạt giống.
+        </p>
+      </div>
+
+      <div class="prose">
+        <p>
+          Eq (19) gán mỗi nút <var>v</var> vào cộng đồng có xác suất thành viên lớn nhất:
+        </p>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức 19: gán nút v vào cộng đồng có xác suất pi v c lớn nhất">
+        <div class="eq__body math">
+          <var>c</var><sup><var>v</var></sup><sub><var>m</var></sub>
+          <span class="op">←</span>
+          <span class="maxop">
+            <span class="opname">arg&nbsp;max</span>
+            <span class="lim"><var>c</var> = 1..<var>C</var></span>
+          </span>
+          <var>π</var><sub><var>v</var>,<var>c</var></sub>
+        </div>
+        <span class="eq__num">(19)</span>
+      </div>
+
+      <div class="prose">
+        <p>
+          Trong đó <span class="math"><var>π</var><sub><var>v</var>,<var>c</var></sub></span> là xác
+          suất nút <var>v</var> thuộc cộng đồng <var>c</var>; trong mã, hoà nhau thì lấy chỉ số
+          <var>c</var> nhỏ nhất. Các nút cùng giá trị
+          <span class="math"><var>c</var><sup><var>v</var></sup><sub><var>m</var></sub></span>
+          tạo thành cộng đồng <span class="math"><var>c</var><sub><var>m</var></sub></span>,
+          <var>m</var> = 1..<var>C</var>.
+        </p>
+        <p>
+          Với mỗi cộng đồng <var>m</var>, gọi <span class="math"><var>s</var><sub><var>m</var></sub><sup><var>j</var></sup></span>
+          là tiền tố đường cong sau <var>j</var> điểm, với
+          <span class="math"><var>s</var><sub><var>m</var></sub><sup>0</sup> = ∅</span>. Theo bảng
+          ký hiệu chính, <span class="math"><var>s</var><sub><var>m</var></sub><sup><var>j</var></sup></span>
+          tương ứng <span class="math"><var>S</var><sub><var>m</var></sub><sup>(<var>j</var>)</sup></span>
+          trong Eq (11)–(12) của bản thảo; <var>s</var><sub><var>m</var></sub> là tiền tố đường cong,
+          không phải tập hạt cuối. <var>s</var> không subscript là tập hạt cuối toàn cục. Đặt
+          <span class="math"><var>a</var><sub><var>m</var></sub> = |<var>s</var><sub><var>m</var></sub>|</span>.
+          Mục tiêu là chọn <var>s</var> với |<var>s</var>| ≤ <var>K</var> để cực đại
+          <var>I</var>(<var>s</var>), nhưng không dựng đủ <var>C</var>×<var>K</var> điểm đường cong.
+        </p>
+      </div>
+
+      <dl class="notation">
+        <div><dt><var>𝒢</var> = (<var>𝒰</var>, <var>ℰ</var>), <var>U</var> = |<var>𝒰</var>|</dt><dd>đồ thị xã hội có hướng; số người dùng</dd></div>
+        <div><dt><var>c</var><sub><var>m</var></sub></dt><dd>tập nút của cộng đồng <var>m</var></dd></div>
+        <div><dt><var>𝒢</var><sub><var>m</var></sub> = (<var>c</var><sub><var>m</var></sub>, <var>ℰ</var><sub><var>m</var></sub>)</dt><dd>đồ thị con cảm sinh của cộng đồng <var>m</var></dd></div>
+        <div><dt><var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>, <var>u</var><sub><var>m</var></sub><sup><var>j</var></sup></dt><dd>tập chọn sau <var>j</var> điểm; hạt giống thứ <var>j</var> của cộng đồng <var>m</var></dd></div>
+        <div><dt><var>s</var><sub><var>m</var></sub></dt><dd>tập hạt giống hiện tại của cộng đồng <var>m</var> (tiền tố đường cong trong CTIM-GL)</dd></div>
+        <div><dt><var>s</var></dt><dd>tập hạt giống toàn cục (tập cuối)</dd></div>
+        <div><dt><var>a</var><sub><var>m</var></sub></dt><dd>số điểm đã commit trong cộng đồng <var>m</var></dd></div>
+        <div><dt><var>I</var>(<var>S</var>)</dt><dd>độ lan truyền trên toàn <var>𝒢</var>; <var>S</var> là biến tập hợp</dd></div>
+        <div><dt><var>I</var><sub><var>m</var></sub>(<var>j</var>), <var>cap</var><sub><var>m</var></sub></dt><dd>độ lan truyền tích lũy sau <var>j</var> điểm; <var>cap</var><sub><var>m</var></sub> = min(<var>K</var>, |<var>c</var><sub><var>m</var></sub>|)</dd></div>
+        <div><dt><var>Δ</var><var>I</var><sub><var>m</var></sub></dt><dd>lợi ích biên lớn nhất của một ứng viên trong <var>c</var><sub><var>m</var></sub> khi thêm vào <var>s</var><sub><var>m</var></sub></dd></div>
+        <div><dt><var>κ</var><sub><var>m</var></sub></dt><dd>khoá heap: <var>Δ</var><var>I</var><sub><var>m</var></sub> tại trạng thái hiện tại</dd></div>
+        <div><dt><var>C</var>, <var>K</var></dt><dd>số cộng đồng; ngân sách hạt giống</dd></div>
+        <div><dt><var>π</var><sub><var>v</var>,<var>c</var></sub></dt><dd>xác suất nút <var>v</var> thuộc cộng đồng <var>c</var></dd></div>
+        <div><dt><var>c</var><sup><var>v</var></sup><sub><var>m</var></sub></dt><dd>cộng đồng được gán cho nút <var>v</var> bởi Eq (19)</dd></div>
+        <div><dt><var>dp</var>, <var>Γ</var></dt><dd>giá trị dự phòng; independence gap <var>Γ</var> = <var>dp</var> − <var>I</var>(<var>s</var>)</dd></div>
+        <div><dt><var>s</var><sub>cat</sub>, <var>s</var><sub>r</sub></dt><dd>tập nối từ các điểm curve; tập realisation</dd></div>
+      </dl>
+
+      <h3 class="subhead">2. Giai đoạn 1: đường cong ảnh hưởng lười <small>Eq (GL1)–(GL6)</small></h3>
+      <div class="prose">
+        <p>
+          Với mỗi cộng đồng <var>m</var>, đường cong tích lũy và lợi ích biên được định nghĩa bởi
+          Eq (GL1)–(GL2). Đây là cùng đại lượng <var>I</var><sub><var>m</var></sub>(<var>j</var>) của
+          CTIM, nhưng đường cong được phép dựng dở dang.
+        </p>
+      </div>
+
+      <div class="note" style="margin-top:0; margin-bottom:8px;">
+        <strong>Quy ước ký hiệu.</strong> <var>s</var><sub><var>m</var></sub> là tiền tố hiện tại,
+        tức tiền tố sau <var>a</var><sub><var>m</var></sub> điểm; <var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>
+        là tiền tố sau <var>j</var> điểm. GL1, GL3, GL4 dùng <var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>;
+        các công thức trạng thái GL2, GL5–GL8 dùng <var>s</var><sub><var>m</var></sub> hiện tại.
+        Như vậy <var>s</var><sub><var>m</var></sub> luôn là <var>s</var><sub><var>m</var></sub><sup><var>a</var><sub><var>m</var></sub></sup>.
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL1: I m của j bằng I của tiền tố s m mũ j">
+        <div class="eq__body math">
+          <var>I</var><sub><var>m</var></sub>(<var>j</var>)
+          <span class="op">=</span>
+          <var>I</var>(<var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>),
+          <span class="op"> </span>
+          <var>s</var><sub><var>m</var></sub><sup>0</sup> <span class="op">=</span> ∅
+        </div>
+        <span class="eq__num">(GL1)</span>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL2: lợi ích biên lớn nhất của một ứng viên trong cộng đồng m">
+        <div class="eq__body math">
+          <span class="opname">Δ</span><var>I</var><sub><var>m</var></sub>
+          <span class="op">=</span>
+          <span class="maxop">
+            <span class="opname">max</span>
+            <span class="lim"><var>u</var> ∈ <var>c</var><sub><var>m</var></sub> \ <var>s</var><sub><var>m</var></sub></span>
+          </span>
+          <span class="op">[</span>
+          <var>I</var>(<var>s</var><sub><var>m</var></sub> <span class="op">∪</span> {<var>u</var>})
+          <span class="op">−</span>
+          <var>I</var>(<var>s</var><sub><var>m</var></sub>)
+          <span class="op">]</span>
+        </div>
+        <span class="eq__num">(GL2)</span>
+      </div>
+
+      <div class="prose">
+        <p>
+          Khi dựng điểm thứ <var>j</var>, thay <var>s</var><sub><var>m</var></sub> trong GL2 bằng
+          <var>s</var><sub><var>m</var></sub><sup><var>j</var>−1</sup>. Điểm kế tiếp được chọn theo
+          cùng quy tắc greedy của CTIM: nút trong cộng đồng đem lại lợi ích biên lớn nhất khi thêm
+          vào tiền tố hiện tại (Eq GL3), rồi tiền tố được cập nhật (Eq GL4).
+        </p>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL3: chọn nút có lợi ích biên lớn nhất trong cộng đồng">
+        <div class="eq__body math">
+          <var>u</var><sub><var>m</var></sub><sup><var>j</var></sup>
+          <span class="op">=</span>
+          <span class="maxop">
+            <span class="opname">arg&nbsp;max</span>
+            <span class="lim"><var>u</var> ∈ <var>c</var><sub><var>m</var></sub> \ <var>s</var><sub><var>m</var></sub><sup><var>j</var>−1</sup></span>
+          </span>
+          <span class="op">[</span>
+          <var>I</var>(<var>s</var><sub><var>m</var></sub><sup><var>j</var>−1</sup>
+          <span class="op">∪</span> {<var>u</var>})
+          <span class="op">−</span>
+          <var>I</var>(<var>s</var><sub><var>m</var></sub><sup><var>j</var>−1</sup>)
+          <span class="op">]</span>
+        </div>
+        <span class="eq__num">(GL3)</span>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL4: cập nhật tiền tố đường cong">
+        <div class="eq__body math">
+          <var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>
+          <span class="op">=</span>
+          <var>s</var><sub><var>m</var></sub><sup><var>j</var>−1</sup>
+          <span class="op">∪</span>
+          {<var>u</var><sub><var>m</var></sub><sup><var>j</var></sup>}
+        </div>
+        <span class="eq__num">(GL4)</span>
+      </div>
+
+      <div class="prose">
+        <p>
+          Khác với việc dựng đủ đường cong, CTIM-GL không chạy Eq (GL3)–(GL4) cho mọi
+          <var>j</var> = 1…<var>cap</var><sub><var>m</var></sub> trước khi chia
+          ngân sách. Mỗi cộng đồng giữ một đường cong lười <var>C</var><sub><var>m</var></sub> với
+          hai thao tác: <span class="opname">peek</span> trả lợi ích biên của điểm kế tiếp (Eq GL5),
+          <span class="opname">commit</span> mới chọn điểm đó và tăng <var>a</var><sub><var>m</var></sub>
+          (Eq GL6).
+        </p>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL5: peek trả lợi ích biên của điểm kế tiếp">
+        <div class="eq__body math">
+          <span class="opname">peek</span>(<var>m</var>)
+          <span class="op">=</span>
+          <span class="opname">Δ</span><var>I</var><sub><var>m</var></sub>
+        </div>
+        <span class="eq__num">(GL5)</span>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL6: commit chọn điểm kế tiếp và tăng phân bổ">
+        <div class="eq__body math">
+          <span class="opname">commit</span>(<var>m</var>):
+          <span class="op"> </span>
+          <var>s</var><sub><var>m</var></sub>
+          <span class="op">←</span>
+          <var>s</var><sub><var>m</var></sub> <span class="op">∪</span>
+          {<var>u</var><sub><var>m</var></sub><sup><var>a</var><sub><var>m</var></sub>+1</sup>},
+          <span class="op"> </span>
+          <var>a</var><sub><var>m</var></sub>
+          <span class="op">←</span>
+          <var>a</var><sub><var>m</var></sub> <span class="op">+</span> 1
+        </div>
+        <span class="eq__num">(GL6)</span>
+      </div>
+
+      <div class="note">
+        <strong>Đường cong đo trên <var>𝒢</var>, không phải trên <var>𝒢</var><sub><var>m</var></sub>.</strong>
+        Trong CTIM, <var>I</var><sub><var>m</var></sub>(<var>j</var>) đo trên đồ thị con cảm sinh
+        <span class="math"><var>𝒢</var><sub><var>m</var></sub> = (<var>c</var><sub><var>m</var></sub>, <var>ℰ</var><sub><var>m</var></sub>)</span>.
+        Trong CTIM-GL, <var>I</var> trong Eq (GL1)–(GL6) là MIA trên toàn <var>𝒢</var>, và chỉ giữ
+        tiền tố <var>s</var><sub><var>m</var></sub> của cộng đồng. Vì <var>s</var><sub><var>m</var></sub>
+        chỉ chứa nút của <var>c</var><sub><var>m</var></sub>, đường cong của cộng đồng này không phụ
+        thuộc vào lựa chọn của cộng đồng khác. Đây là điều kiện để phép phân bổ ở §3 tách được.
+      </div>
+
+      <h3 class="subhead">3. Giai đoạn 2: phân bổ ngân sách bằng heap <small>Eq (GL7)–(GL9)</small></h3>
+      <div class="prose">
+        <p>
+          Heap giữ đúng một khoá cho mỗi cộng đồng, là lợi ích biên của điểm kế tiếp trên đường
+          cong của cộng đồng đó (Eq GL7). Ban đầu <var>a</var><sub><var>m</var></sub> = 0 và
+          <var>s</var><sub><var>m</var></sub> = ∅, nên khoá là
+          <span class="math"><span class="opname">Δ</span><var>I</var><sub><var>m</var></sub> = max<sub><var>u</var>∈<var>c</var><sub><var>m</var></sub></sub> <var>I</var>({<var>u</var>})</span>,
+          lấy trực tiếp từ bảng solo và không cần thêm một lần tính lợi ích nào.
+        </p>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL7: khoá heap của cộng đồng m">
+        <div class="eq__body math">
+          <var>κ</var><sub><var>m</var></sub>
+          <span class="op">=</span>
+          <span class="opname">Δ</span><var>I</var><sub><var>m</var></sub>
+        </div>
+        <span class="eq__num">(GL7)</span>
+      </div>
+
+      <div class="prose">
+        <p>
+          Mỗi bước lấy cộng đồng có khoá lớn nhất trong các cộng đồng còn ngân sách (Eq GL8), commit
+          đúng một điểm đường cong, tăng phân bổ của cộng đồng đó và giảm ngân sách (Eq GL9). Các
+          cộng đồng khác không đổi khoá, vì đường cong của chúng độc lập.
+        </p>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL8: chọn cộng đồng có khoá heap lớn nhất">
+        <div class="eq__body math">
+          <var>m</var><sup>⋆</sup>
+          <span class="op">=</span>
+          <span class="maxop">
+            <span class="opname">arg&nbsp;max</span>
+            <span class="lim"><var>m</var> : <var>a</var><sub><var>m</var></sub> &lt; <var>cap</var><sub><var>m</var></sub></span>
+          </span>
+          <var>κ</var><sub><var>m</var></sub>
+        </div>
+        <span class="eq__num">(GL8)</span>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL9: commit cộng đồng được chọn, tăng phân bổ và giảm ngân sách">
+        <div class="eq__body math">
+          <span class="opname">commit</span>(<var>m</var><sup>⋆</sup>),
+          <span class="op"> </span>
+          <var>a</var><sub><var>m</var>⋆</sub>
+          <span class="op">←</span>
+          <var>a</var><sub><var>m</var>⋆</sub> <span class="op">+</span> 1,
+          <span class="op"> </span>
+          <var>k</var>
+          <span class="op">←</span>
+          <var>k</var> <span class="op">−</span> 1
+        </div>
+        <span class="eq__num">(GL9)</span>
+      </div>
+
+      <div class="prose">
+        <p>
+          Lặp <var>K</var> lần. Bất biến của vòng lặp là: sau <var>step</var> bước, đa tập các lợi ích
+          biên đã commit là <var>t</var> lợi ích biên lớn nhất có thể chọn trên hợp các đường cong,
+          tuân theo điều kiện tiền tố. Vì mỗi đường cong lõm, lợi ích biên không tăng, nên phần tử
+          vừa lấy ra luôn là phần tử lớn nhất còn lại. Kết quả của giai đoạn này là phân bổ
+          <var>a</var><sub><var>m</var></sub>: số điểm đường cong cấp cho từng cộng đồng. Phân bổ
+          này là quota cho giai đoạn realisation.
+        </p>
+      </div>
+
+      <div class="note">
+        <strong>Không còn bảng DP.</strong> Eq (GL8)–(GL9) thay cho bảng <var>I</var>[<var>m</var>,<var>k</var>],
+        bảng <var>t</var>[<var>m</var>,<var>k</var>] và vòng quay lui. Chỉ còn <var>C</var> khoá heap
+        và <var>K</var> bước; mỗi bước commit đúng một điểm đường cong. Heap không phải một heuristic:
+        nó là dạng tham lam của DP trên các đường cong lõm, chứng minh ở §6.
+      </div>
+
+      <h3 class="subhead">4. Giai đoạn 3: realisation với quota <small>Eq (GL10)–(GL11) · giữ nguyên</small></h3>
+      <div class="prose">
+        <p>
+          Các điểm commit ở §3 là điểm của đường cong, không phải tập hạt cuối. Ở §4,
+          <var>s</var> không subscript là tập hạt cuối toàn cục. Đường cong được đo
+          trên tiền tố riêng nên lạc quan: nó không thấy ảnh hưởng chéo giữa các cộng đồng. Vì vậy
+          CTIM-GL chạy thêm một pha realisation trên hợp các cộng đồng có phân bổ dương, dùng
+          <var>a</var><sub><var>m</var></sub> làm quota cứng cho từng cộng đồng. Cụ thể, khi chọn
+          <var>v</var> ∈ <var>c</var><sub><var>m</var></sub>, phải có
+          |<var>s</var> ∩ <var>c</var><sub><var>m</var></sub>| &lt; <var>a</var><sub><var>m</var></sub>.
+        </p>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL10: chọn hạt giống có lợi ích biên thật lớn nhất trong pha realisation">
+        <div class="eq__body math">
+          <var>v</var><sup>⋆</sup>
+          <span class="op">=</span>
+          <span class="maxop">
+            <span class="opname">arg&nbsp;max</span>
+            <span class="lim"><var>v</var> ∈ <var>c</var><sub><var>m</var></sub> \ <var>s</var>, <var>a</var><sub><var>m</var></sub> &gt; 0</span>
+          </span>
+          <span class="op">[</span>
+          <var>I</var>(<var>s</var> <span class="op">∪</span> {<var>v</var>})
+          <span class="op">−</span>
+          <var>I</var>(<var>s</var>)
+          <span class="op">]</span>
+        </div>
+        <span class="eq__num">(GL10)</span>
+      </div>
+
+      <div class="eq" role="math" aria-label="Công thức GL11: cập nhật tập hạt giống trong pha realisation">
+        <div class="eq__body math">
+          <var>s</var>
+          <span class="op">←</span>
+          <var>s</var> <span class="op">∪</span> {<var>v</var><sup>⋆</sup>},
+          <span class="op"> </span>
+          lặp <var>K</var> lần
+        </div>
+        <span class="eq__num">(GL11)</span>
+      </div>
+
+      <div class="prose">
+        <p>
+          Eq (GL10)–(GL11) là greedy lười trên toàn đồ thị, có quota. Nó đánh giá lợi ích biên thật
+          trên <var>s</var> chung, nên giá trị trả về là một <var>I</var>(<var>s</var>) thật, không
+          phải tổng các điểm đường cong. Quota <var>a</var><sub><var>m</var></sub> giữ đúng phân bổ
+          của §3. Trong mã, gọi <var>s</var><sub>cat</sub> là tập nối từ các điểm curve và
+          <var>s</var><sub>r</sub> là tập realisation; cả hai được chấm, tập có
+          <var>I</var>(·) lớn hơn được trả về, và <code>realisation_fallback</code> ghi lại bên nào
+          thắng. Giá trị dự phòng từ đường cong là <var>dp</var> = Σ<sub><var>m</var></sub>
+          <var>I</var><sub><var>m</var></sub>(<var>a</var><sub><var>m</var></sub>); độ lệch
+          <var>Γ</var> = <var>dp</var> − <var>I</var>(<var>s</var>) là independence gap, in trong
+          <code>stats['independence_gap']</code>.
+        </p>
+      </div>
+
+      <h3 class="subhead">5. Thuật toán đầy đủ <small>Algorithm 1</small></h3>
+      <div class="algo">
+        <div class="algo__head">Algorithm 1 · CTIM-GL</div>
+        <pre><span class="ln">1</span>  MIA ← GlobalMIA(𝒢, h)
+<span class="ln">2</span>  H ← empty max-heap
+<span class="ln">3</span>  <span class="kw">for</span> m = 1..C <span class="kw">do</span>
+<span class="ln">4</span>      s_m ← ∅; a_m ← 0
+<span class="ln">5</span>      κ_m ← ΔI_m            <span class="cm"># = max_{u∈c_m} I({u})</span>
+<span class="ln">6</span>      H.push(m, κ_m)
+<span class="ln">7</span>  <span class="kw">for</span> step = 1..K <span class="kw">do</span>
+<span class="ln">8</span>      m* ← H.pop_max()
+<span class="ln">9</span>      u* ← argmax_{u∈c_m*\s_m*} [I(s_m*∪{u}) − I(s_m*)]
+<span class="ln">10</span>     s_m* ← s_m* ∪ {u*}; a_m* ← a_m* + 1
+<span class="ln">11</span>     <span class="kw">if</span> a_m* &lt; cap_m* <span class="kw">then</span>
+<span class="ln">12</span>         H.push(m*, ΔI_m*)
+<span class="ln">13</span>  s ← Realise(∪_{m:a_m&gt;0} c_m, K, a)
+<span class="ln">14</span>  <span class="kw">return</span> s</pre>
+      </div>
+
+      <div class="prose">
+        <p>
+          Dòng 1–6 khởi tạo: một MIA, <var>C</var> khoá heap, chưa dựng điểm đường cong nào. Dòng
+          7–12 là <var>K</var> vòng lặp; mỗi vòng commit đúng một điểm, chỉ cộng đồng vừa chọn được
+          đẩy lại khoá. Dòng 13 là realisation với quota <var>a</var><sub><var>m</var></sub>. Tổng
+          số điểm đường cong được dựng nhiều nhất là <var>K</var>, không phải <var>C</var>×<var>K</var>.
+          Lưu ý ký hiệu: <var>s</var><sub><var>m</var></sub> ở dòng 4–12 là tiền tố đường cong;
+          <var>s</var> ở dòng 13 là tập hạt cuối toàn cục.
+        </p>
+      </div>
+
+      <h3 class="subhead">6. Vì sao heap cho đúng phân bổ của DP <small>ba bổ đề và một định lý</small></h3>
+
+      <div class="paper-lemma">
+        <h4>Bổ đề 1 (lõm)</h4>
+        <p>
+          Vì <var>I</var> là submodular, với mọi <var>A</var> ⊆ <var>B</var> và
+          <var>u</var> ∉ <var>B</var>:
+          <span class="math"><var>I</var>(<var>A</var>∪{<var>u</var>}) − <var>I</var>(<var>A</var>) ≥ <var>I</var>(<var>B</var>∪{<var>u</var>}) − <var>I</var>(<var>B</var>)</span>.
+          Do đó dãy <span class="math"><var>I</var><sub><var>m</var></sub>(<var>j</var>) − <var>I</var><sub><var>m</var></sub>(<var>j</var>−1)</span>
+          không tăng theo <var>j</var>: đường cong lõm.
+        </p>
+      </div>
+
+      <div class="paper-lemma">
+        <h4>Bổ đề 2 (dãy heap)</h4>
+        <p>
+          Các khoá heap được pop ra tạo thành một dãy không tăng. Thật vậy, sau khi pop khoá
+          <span class="math"><var>κ</var></span> của cộng đồng <var>m</var>, commit làm
+          <var>a</var><sub><var>m</var></sub> tăng thêm 1 và <var>s</var><sub><var>m</var></sub>
+          nhận điểm mới. Khoá mới là <span class="math"><span class="opname">Δ</span><var>I</var><sub><var>m</var></sub></span>
+          tại <var>s</var><sub><var>m</var></sub> mới; theo Bổ đề 1, nó không lớn hơn khoá cũ
+          <span class="math"><var>κ</var></span>; khoá của các cộng đồng khác không đổi. Vì vậy
+          phần tử được pop ở mỗi bước là phần tử lớn nhất còn lại, và dãy pop là <var>K</var> lợi
+          ích biên lớn nhất có thể chọn dưới ràng buộc tiền tố.
+        </p>
+      </div>
+
+      <div class="paper-lemma">
+        <h4>Bổ đề 3 (độc lập)</h4>
+        <p>
+          Đường cong <var>I</var><sub><var>m</var></sub>(<var>j</var>) chỉ phụ thuộc vào tiền tố
+          <var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>, không phụ thuộc vào tiền tố
+          của cộng đồng khác. Vì vậy khoá heap của <var>m</var> là một hàm của trạng thái riêng của
+          <var>m</var>, và bài toán phân bổ tách được theo cộng đồng.
+        </p>
+      </div>
+
+      <div class="paper-lemma">
+        <h4>Định lý (tương đương với DP)</h4>
+        <p>
+          Phân bổ <var>a</var> do heap tạo ra cực đại
+          <span class="math">Σ<sub><var>m</var></sub> <var>I</var><sub><var>m</var></sub>(<var>a</var><sub><var>m</var></sub>)</span>
+          với <span class="math">Σ<sub><var>m</var></sub> <var>a</var><sub><var>m</var></sub> ≤ <var>K</var></span>,
+          tức là nghiệm của Eq (13). Chứng minh: Bổ đề 2 nói dãy pop là <var>K</var> lợi ích biên
+          lớn nhất có thể chọn dưới ràng buộc tiền tố. Mọi phân bổ khác cũng là một tập tiền tố của
+          cùng các đường cong, nên tổng của nó không vượt quá tổng <var>K</var> lợi ích biên đó. Vì
+          vậy <var>a</var> cực đại tổng trên. Thế hoà tuyệt đối là ngoại lệ duy nhất: hai phân bổ
+          khác nhau có thể cùng tổng giá trị. Khi đó heap phá hoà theo nhãn cộng đồng nhỏ hơn.
+        </p>
+      </div>
+
+      <h3 class="subhead">7. Độ phức tạp <small>và điểm nghẽn thực tế</small></h3>
+      <div class="prose">
+        <p>
+          CTIM-GL cần <span class="math">O(<var>U</var><var>τ</var> log <var>τ</var>)</span> cho bảng
+          solo, <span class="math">O(<var>K</var> log <var>C</var>)</span> cho heap, tối đa
+          <var>K</var> điểm đường cong, và <span class="math">O(<var>K</var><var>τ</var><sup>2</sup>)</span>
+          cho realisation. So với CTIM-G, phần biến mất là <var>C</var>×<var>K</var> điểm đường cong
+          và bảng DP <span class="math">O(<var>C</var><var>K</var><sup>2</sup>)</span>; phần giữ
+          nguyên là bảng solo và realisation.
+        </p>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table complexity-table">
+          <caption class="sr-only">So sánh độ phức tạp của CTIM-G và CTIM-GL.</caption>
+          <thead>
+            <tr><th scope="col">Thành phần</th><th scope="col">CTIM-G</th><th scope="col">CTIM-GL</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Điểm đường cong</td><td>C · K</td><td>≤ K</td></tr>
+            <tr><td>Bảng DP</td><td>O(C · K²)</td><td>—</td></tr>
+            <tr><td>Heap cộng đồng</td><td>—</td><td>O(K log C)</td></tr>
+            <tr><td>Realisation</td><td>O(K · τ²)</td><td>O(K · τ²)</td></tr>
+            <tr><td>Bảng solo (chung)</td><td>O(U · τ log τ)</td><td>O(U · τ log τ)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        <var>τ</var> là kích thước trung bình arborescence. Trong log, DP chỉ tốn 0,00–0,01 s; điểm
+        nghẽn thời gian là bảng solo. Giá trị của việc bỏ DP là cấu trúc: nó cho phép chỉ dựng
+        <var>K</var> điểm thay vì <var>C</var>×<var>K</var>. Trên Digg: 2.000 → 20 điểm, 4.620 → 185
+        lần tính lợi ích; số cây gần như không đổi (35.651 → 33.633).
+      </p>
+
+      <h3 class="subhead">8. Ví dụ chạy tay <small>K = 6 · ba cộng đồng A, B, C</small></h3>
+      <div class="alloc-demo" id="allocDemo">
+        <div class="alloc-demo__head">
+          <div>
+            <h3>Ba đường cong lõm</h3>
+            <p>
+              Heap chạy sáu bước của Algorithm 1. Kết quả là A:3, B:2, C:1, tổng 56; DP cho cùng
+              phân bổ. Số liệu là ví dụ minh hoạ, không phải log.
+            </p>
+          </div>
+          <button class="btn" id="allocRun" type="button">Chạy từng bước</button>
+        </div>
+
+        <div class="alloc-demo__grid">
+          <div class="alloc-panel">
+            <p class="alloc-panel__title">Đối chiếu · DP (Eq 13)</p>
+            <div class="dp-wrap">
+              <table class="dp-table">
+                <caption class="sr-only">Bảng DP cho ví dụ K bằng 6 và ba cộng đồng A, B, C. Đường đi tối ưu được tô sáng.</caption>
+                <thead>
+                  <tr><th scope="col">m \ k</th><th scope="col">0</th><th scope="col">1</th><th scope="col">2</th><th scope="col">3</th><th scope="col">4</th><th scope="col">5</th><th scope="col">6</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">A</th>
+                    <td>0</td><td>15</td><td>26</td>
+                    <td class="is-path">34<small>j=3</small></td>
+                    <td>39</td><td>39</td><td>39</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">A+B</th>
+                    <td>0</td><td>15</td><td>26</td><td>35</td><td>43</td>
+                    <td class="is-path">49<small>j=2</small></td>
+                    <td>54</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">A+B+C</th>
+                    <td>0</td><td>15</td><td>26</td><td>35</td><td>43</td><td>50</td>
+                    <td class="is-path">56<small>j=1</small></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="dp-note">
+              Đường đi: 56 ← 49 + 7 (C:1); 49 ← 34 + 15 (B:2); 34 ← 0 + 34 (A:3). Không cần đọc
+              toàn bảng nếu chỉ cần phân bổ cuối.
+            </p>
+          </div>
+
+          <div class="alloc-panel">
+            <p class="alloc-panel__title">CTIM-GL · heap</p>
+
+            <div class="comm-list" aria-hidden="true">
+              <div class="comm" data-comm="0">
+                <span class="comm__name">A</span>
+                <div class="bars">
+                  <span class="bar" style="--h:100%"></span>
+                  <span class="bar" style="--h:73.3%"></span>
+                  <span class="bar" style="--h:53.3%"></span>
+                  <span class="bar" style="--h:33.3%"></span>
+                </div>
+                <span class="comm__count" data-count="0">3 hạt</span>
+              </div>
+              <div class="comm" data-comm="1">
+                <span class="comm__name">B</span>
+                <div class="bars">
+                  <span class="bar" style="--h:60%"></span>
+                  <span class="bar" style="--h:40%"></span>
+                  <span class="bar" style="--h:26.7%"></span>
+                  <span class="bar" style="--h:13.3%"></span>
+                </div>
+                <span class="comm__count" data-count="1">2 hạt</span>
+              </div>
+              <div class="comm" data-comm="2">
+                <span class="comm__name">C</span>
+                <div class="bars">
+                  <span class="bar" style="--h:46.7%"></span>
+                  <span class="bar" style="--h:33.3%"></span>
+                  <span class="bar" style="--h:20%"></span>
+                  <span class="bar" style="--h:6.7%"></span>
+                </div>
+                <span class="comm__count" data-count="2">1 hạt</span>
+              </div>
+            </div>
+
+            <ol class="steps" id="allocSteps">
+              <li><span>1</span><b>A</b><em>+15</em><small>next 11</small></li>
+              <li><span>2</span><b>A</b><em>+11</em><small>next 8</small></li>
+              <li><span>3</span><b>B</b><em>+9</em><small>next 6</small></li>
+              <li><span>4</span><b>A</b><em>+8</em><small>next 5</small></li>
+              <li><span>5</span><b>C</b><em>+7</em><small>next 5</small></li>
+              <li><span>6</span><b>B</b><em>+6</em><small>next 4</small></li>
+            </ol>
+
+            <p class="alloc-result" aria-live="polite">
+              <span data-alloc-summary>A:3 · B:2 · C:1</span>
+              <strong data-alloc-total>tổng 56</strong>
+              <span class="alloc-badge" data-alloc-badge>khớp DP</span>
+            </p>
+          </div>
+        </div>
+
+        <p class="table-note" style="margin-top:14px;">
+          Ví dụ dừng ở phân bổ; pha realisation không đổi. DP cần bảng <var>C</var>×<var>K</var>
+          và quay lui; heap cần <var>C</var> khoá và <var>K</var> bước. Điểm đường cong cần dựng:
+          <var>C</var>×<var>K</var> → <var>K</var>.
+        </p>
+      </div>
+
+      <h3 class="subhead">9. Đối chiếu với Eq (11)–(16) <small>phụ lục</small></h3>
+      <div class="table-wrap">
+        <table class="map-table">
+          <caption class="sr-only">Đối chiếu công thức của CTIM-G trong bản thảo với trình tự công thức của CTIM-GL.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Eq gốc</th>
+              <th scope="col">Nội dung</th>
+              <th scope="col">Eq CTIM-GL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>(11)</td>
+              <td><span class="math"><var>I</var><sub><var>m</var></sub>(<var>j</var>) = <var>I</var>(<var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>)</span></td>
+              <td><span class="math">(GL1)–(GL2)</span>: giá trị và lợi ích biên</td>
+            </tr>
+            <tr>
+              <td>(12)</td>
+              <td>Quy tắc greedy cập nhật <span class="math"><var>s</var><sub><var>m</var></sub><sup><var>j</var></sup></span></td>
+              <td><span class="math">(GL3)–(GL4)</span>, chạy bên trong <code>commit()</code></td>
+            </tr>
+            <tr>
+              <td>(13)</td>
+              <td><span class="math"><var>I</var>[<var>m</var>,<var>k</var>] = max<sub><var>j</var></sub>(<var>I</var>[<var>m</var>−1,<var>k</var>−<var>j</var>] + <var>I</var><sub><var>m</var></sub>(<var>j</var>))</span></td>
+              <td><span class="math">(GL8)–(GL9)</span>: chọn cộng đồng và cập nhật phân bổ</td>
+            </tr>
+            <tr>
+              <td>(14)</td>
+              <td><span class="math"><var>t</var>[<var>m</var>,<var>k</var>] = arg&nbsp;max<sub><var>j</var></sub>(<var>I</var>[<var>m</var>−1,<var>k</var>−<var>j</var>] + <var>I</var><sub><var>m</var></sub>(<var>j</var>))</span></td>
+              <td><span class="math">(GL7)</span>: khoá <span class="math"><var>κ</var><sub><var>m</var></sub></span> thay cho bảng Take</td>
+            </tr>
+            <tr>
+              <td>(15)</td>
+              <td><span class="math">|<var>s</var><sub><var>m</var></sub>| = <var>t</var>[<var>m</var>,<var>k</var>]</span></td>
+              <td><span class="math">(GL9)</span>: <span class="math"><var>a</var><sub><var>m</var>⋆</sub> ← <var>a</var><sub><var>m</var>⋆</sub> + 1</span></td>
+            </tr>
+            <tr>
+              <td>(16)</td>
+              <td><span class="math"><var>k</var> = <var>k</var> − |<var>s</var><sub><var>m</var></sub>|</span></td>
+              <td><span class="math">(GL9)</span>: <span class="math"><var>k</var> ← <var>k</var> − 1</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        Số (GL1)–(GL11) là số đề xuất, không đụng Eq (18) của MIA. <var>s</var><sub><var>m</var></sub><sup><var>j</var></sup>
+        là ký hiệu của bảng ký hiệu chính, tương ứng <var>S</var><sub><var>m</var></sub><sup>(<var>j</var>)</sup>
+        trong Eq (11)–(12) của bản thảo; <var>a</var><sub><var>m</var></sub> = |<var>s</var><sub><var>m</var></sub>|
+        là số điểm đã commit, không phải tập hạt cuối. Ký hiệu <var>T</var>[<var>m</var>,<var>k</var>]
+        trong Eq (14)–(15) của bản thảo viết là <var>t</var>[<var>m</var>,<var>k</var>] trong bảng
+        ký hiệu chính. Eq (11)–(16) là hai giai đoạn trong bản thảo hiện tại; Eq (GL10)–(GL11) là
+        pha realisation đã có trong CTIM-GL.
+      </p>
+
+      <div class="rewrite">
+        <div class="rewrite__head">
+          <h3>Đoạn viết lại cho báo cáo</h3>
+          <button class="btn btn--small" id="copyRewrite" type="button">Sao chép đoạn viết lại</button>
+        </div>
+        <div id="rewriteText">
+          <p>
+            <strong>Giai đoạn 1.</strong> Với mỗi cộng đồng m, gọi s_m^j là tiền tố đường cong sau
+            j điểm, s_m^0=∅. Đường cong và lợi ích biên được định nghĩa bởi Eq (GL1)–(GL2); điểm
+            kế tiếp và cập nhật tiền tố theo Eq (GL3)–(GL4). Thay vì dựng đủ cap_m điểm cho
+            mọi cộng đồng, mỗi cộng đồng giữ một đường cong lười với hai thao tác: peek trả
+            ΔI_m (Eq GL5), commit mới chọn điểm kế tiếp và tăng a_m (Eq GL6). Đường cong vẫn
+            được đo bằng MIA toàn cục trên tiền tố riêng s_m, nên các cộng đồng độc lập. s_m ở đây
+            là tiền tố đường cong, không phải tập hạt cuối.
+          </p>
+          <p>
+            <strong>Giai đoạn 2.</strong> Duy trì heap với khoá κ_m=ΔI_m (Eq GL7). Lặp K lần:
+            chọn cộng đồng m* có khoá lớn nhất trong các cộng đồng còn ngân sách (Eq GL8), commit
+            một điểm, tăng a_m*, giảm k (Eq GL9). Kết quả là phân bổ a_m. Vì các đường cong lõm,
+            heap cho đúng phân bổ của Eq (13); chỉ khác khi có thế hoà tuyệt đối.
+          </p>
+          <p>
+            <strong>Giai đoạn 3.</strong> Phân bổ a_m là quota, không phải tập hạt cuối. Chạy
+            realisation (Eq GL10–GL11) trên hợp các cộng đồng có a_m&gt;0, mỗi cộng đồng không vượt
+            quá a_m hạt, để chọn tập hạt cuối. Pha này giữ nguyên và trả về một giá trị I(s) thật.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="ket-qua">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Kết quả</p>
+        <div class="section-head__body">
+          <h2>Giống hệt, ở cả 15 sản phẩm</h2>
+          <p class="sub">
+            CTIM-G và CTIM-GL trả về cùng một tập hạt giống trên mọi sản phẩm, nên mọi thước đo
+            chất lượng đều trùng đến từng chữ số.
+          </p>
+        </div>
+      </div>
+
+      <div class="match-panel">
+        <div class="match-big">
+          <strong>15<span>/15</span></strong>
+          <p>sản phẩm trả về cùng một tập hạt giống</p>
+        </div>
+        <div class="match-groups" role="img" aria-label="Năm tập, mỗi tập ba sản phẩm, tất cả đều trùng tập hạt giống">
+          <div class="match-group"><div class="match-squares"><span class="sq"></span><span class="sq"></span><span class="sq"></span></div><span class="match-label">Digg · 3/3</span></div>
+          <div class="match-group"><div class="match-squares"><span class="sq"></span><span class="sq"></span><span class="sq"></span></div><span class="match-label">Epinions · 3/3</span></div>
+          <div class="match-group"><div class="match-squares"><span class="sq"></span><span class="sq"></span><span class="sq"></span></div><span class="match-label">Ciao · 3/3</span></div>
+          <div class="match-group"><div class="match-squares"><span class="sq"></span><span class="sq"></span><span class="sq"></span></div><span class="match-label">Last.fm · 3/3</span></div>
+          <div class="match-group"><div class="match-squares"><span class="sq"></span><span class="sq"></span><span class="sq"></span></div><span class="match-label">Delicious · 3/3</span></div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <caption class="sr-only">Chất lượng của CTIM-G và CTIM-GL trên năm tập dữ liệu. Hai phương thức cho cùng giá trị MIA và MC-IC, và cùng tập hạt giống ở cả 15 sản phẩm.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tập</th>
+              <th scope="col">MIA<span class="th-sub">CTIM-G = CTIM-GL</span></th>
+              <th scope="col">MC-IC<span class="th-sub">CTIM-G = CTIM-GL</span></th>
+              <th scope="col">Cùng tập</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Digg</td><td>764,01</td><td>918,18</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Epinions</td><td>1.540,37</td><td>7.384,63</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Ciao</td><td>118,20</td><td>843,79</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Last.fm</td><td>76,56</td><td>569,36</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Delicious</td><td>23,03</td><td>126,12</td><td><span class="same-pill">3/3</span></td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td>Tổng</td><td></td><td></td><td><span class="same-pill">15/15</span></td></tr>
+          </tfoot>
+        </table>
+      </div>
+      <p class="table-note">
+        Trung bình 3 sản phẩm mỗi tập. MIA là Eq (18) tại h = 0,1. MC-IC là 1.000 lần mô phỏng lan
+        truyền độc lập. Sai số chuẩn MC-IC trung bình theo thứ tự trong bảng: 1,03; 1,82; 0,73;
+        0,78; 0,51. Hai cột không tách CTIM-G và CTIM-GL vì không có chênh lệch nào để hiển thị.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="toc-do">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Tốc độ</p>
+        <div class="section-head__body">
+          <h2>Nhanh gấp đôi khi đường cong còn lớn</h2>
+          <p class="sub">
+            Trên Digg và Epinions, pha dựng đường cong chiếm 70–73% thời gian của CTIM-G. CTIM-GL
+            cắt phần lớn công việc đó. Trên hai tập nhỏ, cả hai chạy dưới nửa giây và tỉ lệ không
+            còn ý nghĩa.
+          </p>
+        </div>
+      </div>
+
+      <figure class="chart" aria-labelledby="speedTitle">
+        <div class="chart__head">
+          <h3 id="speedTitle">Tỉ lệ thời gian CTIM-G / CTIM-GL</h3>
+          <p>1× = không đổi · càng cao càng nhanh</p>
+        </div>
+
+        <div class="bar-scale" aria-hidden="true">
+          <span></span>
+          <div class="bar-scale__track">
+            <span style="left:0%">0</span>
+            <span style="left:45.45%">1×</span>
+            <span style="left:90.91%">2×</span>
+          </div>
+          <span></span>
+        </div>
+
+        <div class="bar-chart">
+          <div class="bar-row" tabindex="0" role="img" aria-label="Digg: CTIM-G 9,90 giây, CTIM-GL 4,90 giây, nhanh 2,02 lần" data-tip="Digg · CTIM-G 9,90 s · CTIM-GL 4,90 s · 2,02×">
+            <span class="bar-row__label">Digg</span>
+            <div class="bar-row__track"><div class="bar-row__bar" style="width:91.87%"></div><span class="bar-row__ref" style="left:45.45%"></span></div>
+            <span class="bar-row__value">2,02×</span>
+          </div>
+          <div class="bar-row" tabindex="0" role="img" aria-label="Epinions: CTIM-G 58,00 giây, CTIM-GL 29,10 giây, nhanh 1,99 lần" data-tip="Epinions · CTIM-G 58,00 s · CTIM-GL 29,10 s · 1,99×">
+            <span class="bar-row__label">Epinions</span>
+            <div class="bar-row__track"><div class="bar-row__bar" style="width:90.60%"></div><span class="bar-row__ref" style="left:45.45%"></span></div>
+            <span class="bar-row__value">1,99×</span>
+          </div>
+          <div class="bar-row" tabindex="0" role="img" aria-label="Ciao: CTIM-G 2,51 giây, CTIM-GL 1,68 giây, nhanh 1,49 lần" data-tip="Ciao · CTIM-G 2,51 s · CTIM-GL 1,68 s · 1,49×">
+            <span class="bar-row__label">Ciao</span>
+            <div class="bar-row__track"><div class="bar-row__bar" style="width:67.69%"></div><span class="bar-row__ref" style="left:45.45%"></span></div>
+            <span class="bar-row__value">1,49×</span>
+          </div>
+          <div class="bar-row is-noise" tabindex="0" role="img" aria-label="Last.fm: CTIM-G 0,37 giây, CTIM-GL 0,33 giây, nhanh 1,12 lần, nhưng cả hai dưới 0,4 giây" data-tip="Last.fm · CTIM-G 0,37 s · CTIM-GL 0,33 s · 1,12× · dưới 0,4 s">
+            <span class="bar-row__label">Last.fm <em>dưới 0,4 s</em></span>
+            <div class="bar-row__track"><div class="bar-row__bar" style="width:51.02%"></div><span class="bar-row__ref" style="left:45.45%"></span></div>
+            <span class="bar-row__value">1,12×</span>
+          </div>
+          <div class="bar-row is-noise" tabindex="0" role="img" aria-label="Delicious: CTIM-G 0,05 giây, CTIM-GL 0,06 giây, tỉ lệ 0,83 lần, nhưng cả hai dưới 0,4 giây" data-tip="Delicious · CTIM-G 0,05 s · CTIM-GL 0,06 s · 0,83× · dưới 0,4 s">
+            <span class="bar-row__label">Delicious <em>dưới 0,4 s</em></span>
+            <div class="bar-row__track"><div class="bar-row__bar" style="width:37.88%"></div><span class="bar-row__ref" style="left:45.45%"></span></div>
+            <span class="bar-row__value">0,83×</span>
+          </div>
+        </div>
+      </figure>
+
+      <div class="table-wrap" style="margin-top: 26px;">
+        <table class="data-table">
+          <caption class="sr-only">Thời gian chọn hạt giống của CTIM-G và CTIM-GL trên năm tập dữ liệu.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tập</th>
+              <th scope="col">CTIM-G (s)</th>
+              <th scope="col">CTIM-GL (s)</th>
+              <th scope="col">Tỉ lệ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Digg</td><td>9,90</td><td>4,90</td><td>2,02×</td></tr>
+            <tr><td>Epinions</td><td>58,00</td><td>29,10</td><td>1,99×</td></tr>
+            <tr><td>Ciao</td><td>2,51</td><td>1,68</td><td>1,49×</td></tr>
+            <tr class="is-noise"><td>Last.fm</td><td>0,37</td><td>0,33</td><td>1,12×</td></tr>
+            <tr class="is-noise"><td>Delicious</td><td>0,05</td><td>0,06</td><td>0,83×</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        Thời gian chọn hạt giống, trung bình 3 sản phẩm. Hai dòng cuối đều dưới 0,4 giây; nhật ký ghi
+        đến 0,01 giây nên tỉ lệ của chúng là nhiễu, không phải bằng chứng tăng tốc.
+      </p>
+
+      <h3 class="subhead">Thời gian đi đâu <small>Digg và Epinions · mỗi tập một thang</small></h3>
+
+      <div class="phase-grid">
+        <figure class="phase-fig">
+          <div class="phase-fig__head">
+            <span class="phase-fig__name">Digg</span>
+            <span class="phase-fig__total">9,90 s → 4,90 s</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-row__label"><span class="dot dot--g" aria-hidden="true"></span>CTIM-G</span>
+            <div class="phase-row__track">
+              <div class="phase-bar" style="width:100%">
+                <span class="phase-seg phase-seg--g" style="width:70.0%"><span>6,93 s</span></span>
+                <span class="phase-seg phase-seg--rest" style="width:30.0%"></span>
+              </div>
+            </div>
+            <span class="phase-row__total">9,90 s</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-row__label"><span class="dot dot--gl" aria-hidden="true"></span>CTIM-GL</span>
+            <div class="phase-row__track">
+              <div class="phase-bar" style="width:49.49%">
+                <span class="phase-seg phase-seg--gl" style="width:38.78%"><span>1,90 s</span></span>
+                <span class="phase-seg phase-seg--rest" style="width:61.22%"></span>
+              </div>
+            </div>
+            <span class="phase-row__total">4,90 s</span>
+          </div>
+          <div class="phase-axis" aria-hidden="true">
+            <span></span>
+            <div class="phase-axis__track"><span>0</span><span>9,90 s</span></div>
+            <span></span>
+          </div>
+        </figure>
+
+        <figure class="phase-fig">
+          <div class="phase-fig__head">
+            <span class="phase-fig__name">Epinions</span>
+            <span class="phase-fig__total">58,00 s → 29,10 s</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-row__label"><span class="dot dot--g" aria-hidden="true"></span>CTIM-G</span>
+            <div class="phase-row__track">
+              <div class="phase-bar" style="width:100%">
+                <span class="phase-seg phase-seg--g" style="width:72.81%"><span>42,23 s</span></span>
+                <span class="phase-seg phase-seg--rest" style="width:27.19%"></span>
+              </div>
+            </div>
+            <span class="phase-row__total">58,00 s</span>
+          </div>
+          <div class="phase-row">
+            <span class="phase-row__label"><span class="dot dot--gl" aria-hidden="true"></span>CTIM-GL</span>
+            <div class="phase-row__track">
+              <div class="phase-bar" style="width:50.17%">
+                <span class="phase-seg phase-seg--gl" style="width:47.22%"><span>13,74 s</span></span>
+                <span class="phase-seg phase-seg--rest" style="width:52.78%"></span>
+              </div>
+            </div>
+            <span class="phase-row__total">29,10 s</span>
+          </div>
+          <div class="phase-axis" aria-hidden="true">
+            <span></span>
+            <div class="phase-axis__track"><span>0</span><span>58,00 s</span></div>
+            <span></span>
+          </div>
+        </figure>
+      </div>
+
+      <div class="phase-legend">
+        <span><i class="key key--g"></i>đường cong CTIM-G</span>
+        <span><i class="key key--gl"></i>đường cong CTIM-GL</span>
+        <span><i class="key key--rest"></i>solo, DP, realise và chi phí khác</span>
+      </div>
+      <p class="table-note">
+        Chiều dài thanh là tổng thời gian; phần tô màu là pha dựng đường cong. Pha đường cong của
+        CTIM-G chiếm 70,0% trên Digg và 72,8% trên Epinions; của CTIM-GL còn 38,8% và 47,2% trong
+        tổng thời gian đã ngắn hơn.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="chi-phi">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Chi phí</p>
+        <div class="section-head__body">
+          <h2>Công việc bị bỏ đi, không phải chất lượng</h2>
+          <p class="sub">
+            Số điểm đường cong và số lần tính lợi ích giảm mạnh. Số cây chỉ giảm nhẹ, vì bảng solo
+            vẫn cần một cây cho mọi nút. Điểm nghẽn tiếp theo nằm ở bảng solo, không phải đường cong.
+          </p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table" style="min-width: 760px;">
+          <caption class="sr-only">Công việc tính toán của CTIM-G và CTIM-GL trên năm tập dữ liệu. Mỗi ô là CTIM-G chuyển sang CTIM-GL.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tập</th>
+              <th scope="col">Điểm đường cong<span class="th-sub">G → GL</span></th>
+              <th scope="col">Lần tính lợi ích<span class="th-sub">G → GL</span></th>
+              <th scope="col">Pha đường cong<span class="th-sub">G → GL</span></th>
+              <th scope="col">Số cây<span class="th-sub">G → GL</span></th>
+              <th scope="col">Cùng tập</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Digg</td><td>2.000 <span class="arrow">→</span> 20</td><td>4.620 <span class="arrow">→</span> 185</td><td>6,93 <span class="arrow">→</span> 1,90 s</td><td>35.651 <span class="arrow">→</span> 33.633</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Epinions</td><td>2.000 <span class="arrow">→</span> 20</td><td>4.315 <span class="arrow">→</span> 179</td><td>42,23 <span class="arrow">→</span> 13,74 s</td><td>27.216 <span class="arrow">→</span> 25.879</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Ciao</td><td>811 <span class="arrow">→</span> 20</td><td>1.166 <span class="arrow">→</span> 207</td><td>1,58 <span class="arrow">→</span> 0,74 s</td><td>3.319 <span class="arrow">→</span> 2.655</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Last.fm</td><td>799 <span class="arrow">→</span> 20</td><td>984 <span class="arrow">→</span> 210</td><td>0,17 <span class="arrow">→</span> 0,14 s</td><td>2.798 <span class="arrow">→</span> 2.146</td><td><span class="same-pill">3/3</span></td></tr>
+            <tr><td>Delicious</td><td>722 <span class="arrow">→</span> 20</td><td>752 <span class="arrow">→</span> 147</td><td>0,01 <span class="arrow">→</span> 0,00 s</td><td>2.507 <span class="arrow">→</span> 1.902</td><td><span class="same-pill">3/3</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        Trung bình 3 sản phẩm. Điểm đường cong của CTIM-G không phải lúc nào cũng 2.000 vì một số
+        cộng đồng có ít hơn 20 nút. Số cây là tổng arborescence dựng trong lượt chọn, phần lớn đến
+        từ bảng solo.
+      </p>
+
+      <div class="callout">
+        <p class="callout__label">Điểm nghẽn đã dịch chuyển</p>
+        <p>
+          Số lần tính lợi ích giảm khoảng 24–25 lần trên Digg và Epinions, nhưng thời gian chỉ giảm
+          khoảng 2 lần. Số cây gần như đứng yên: 35.651 → 33.633 trên Digg, 27.216 → 25.879 trên
+          Epinions. Bảng solo vẫn dựng một cây cho gần như mọi nút, bất kể đường cong được dựng ít
+          hay nhiều. Muốn nhanh hơn nữa, tối ưu bảng solo.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="gioi-han">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Giới hạn</p>
+        <div class="section-head__body">
+          <h2>Đọc đúng phần nào</h2>
+          <p class="sub">
+            Kết quả rất gọn: cùng tập, ít việc hơn. Nhưng phạm vi đo mới là 5 tập, 15 sản phẩm,
+            một mức ngân sách và một ngưỡng.
+          </p>
+        </div>
+      </div>
+
+      <div class="limits-grid">
+        <ul class="caveats">
+          <li><strong>15/15 không phải 15 lần lặp.</strong> Đó là 5 tập × 3 sản phẩm, và ba sản phẩm mỗi tập là ba điều kiện khác nhau, không phải ba lần đo cùng một thứ.</li>
+          <li><strong>Một mức ngân sách.</strong> Tất cả các lần chạy dùng K = 20 và h = 0,1. Chưa có quét K hay quét h trong bộ log này.</li>
+          <li><strong>Hai tập dưới 0,4 giây.</strong> Delicious và Last.fm có tỉ lệ 0,83× và 1,12×, nhưng cả hai đều dưới độ phân giải 0,01 giây của nhật ký. Đừng dùng chúng làm bằng chứng tăng tốc.</li>
+          <li><strong>Thế hoà tuyệt đối.</strong> Nếu hai cộng đồng có lợi ích biên bằng nhau chính xác, heap và DP có thể chia ngân sách khác nhau với cùng tổng giá trị. Không có thế hoà nào dẫn tới hai phân bổ khác nhau trong 15 sản phẩm này.</li>
+          <li><strong>Đây là G so với GL.</strong> CTIM-G so với CTIM là câu chuyện khác. Trên Digg, MIA báo CTIM-G hơn nhưng MC-IC lại báo CTIM-G kém có ý nghĩa; xem báo cáo đầy đủ.</li>
+          <li><strong>Yelp không có trong báo cáo lười.</strong> Dữ liệu đã xử lý của Yelp không có trong kho mã ở máy chạy bộ log này.</li>
+        </ul>
+
+        <div>
+          <div class="use-grid">
+            <div class="use-card">
+              <div class="use-card__head">
+                <span class="dot dot--gl" aria-hidden="true"></span>
+                <h3>CTIM-GL</h3>
+                <span class="use-card__tag">mặc định</span>
+              </div>
+              <p>Dùng cho lượt chạy mới. Cùng tập hạt giống, ít điểm đường cong hơn, nhanh hơn khi pha đường cong còn lớn.</p>
+            </div>
+            <div class="use-card">
+              <div class="use-card__head">
+                <span class="dot dot--g" aria-hidden="true"></span>
+                <h3>CTIM-G</h3>
+                <span class="use-card__tag">đối chiếu</span>
+              </div>
+              <p>Giữ để kiểm toán đường cong đầy đủ, so sánh từng bước, hoặc khi cần ma trận curve cho phân tích.</p>
+            </div>
+          </div>
+
+          <p class="note">
+            <strong>Đây không phải so sánh với CTIM.</strong> Trang chỉ trả lời một câu: thay đường
+            cong đầy đủ bằng đường cong lười có đổi kết quả không. Câu trả lời là không, trên 15
+            sản phẩm. Chất lượng của CTIM-G so với CTIM vẫn là một câu hỏi riêng.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <p class="footer__brand">CTIM-G / CTIM-GL</p>
+    <p>Nguồn: 5 log <code>*_lazy_h01.log</code> · <code>ctim/ctim_global.py</code> · <code>results/lazy_curve_report.docx</code></p>
+    <p>K = 20 · h = 0,1 · C = 100 · MC-IC 1.000 lần · 3 sản phẩm mỗi tập</p>
+  </div>
+</footer>
+
+<div class="tooltip" id="tip" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var root = document.documentElement;
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------------------------------------------------------
+     Theme
+     --------------------------------------------------------------- */
+  var toggle = document.getElementById("themeToggle");
+  var iconSun = document.getElementById("iconSun");
+  var iconMoon = document.getElementById("iconMoon");
+
+  function systemDark() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  }
+
+  function storedTheme() {
+    try { return localStorage.getItem("ctimg-theme"); } catch (e) { return null; }
+  }
+
+  function currentTheme() {
+    var s = storedTheme();
+    if (s === "light" || s === "dark") return s;
+    return systemDark() ? "dark" : "light";
+  }
+
+  function applyTheme(theme) {
+    var dark = theme === "dark";
+    root.setAttribute("data-theme", dark ? "dark" : "light");
+    setIconHidden(iconSun, !dark);
+    setIconHidden(iconMoon, dark);
+    if (toggle) toggle.setAttribute("aria-label", dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối");
+    refreshCanvasColors();
+  }
+
+  function setIconHidden(node, hide) {
+    if (!node) return;
+    if (hide) node.setAttribute("hidden", "");
+    else node.removeAttribute("hidden");
+  }
+
+  if (toggle) {
+    toggle.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      try { localStorage.setItem("ctimg-theme", next); } catch (e) {}
+      applyTheme(next);
+    });
+  }
+
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    var onScheme = function () { if (!storedTheme()) applyTheme(mq.matches ? "dark" : "light"); };
+    if (mq.addEventListener) mq.addEventListener("change", onScheme);
+    else if (mq.addListener) mq.addListener(onScheme);
+  }
+
+  /* ---------------------------------------------------------------
+     Data
+     --------------------------------------------------------------- */
+  var RACE = {
+    digg: {
+      name: "Digg",
+      U: "30.358",
+      E: "99.846",
+      used: 2,
+      alloc: { 39: 9, 52: 11 },
+      points: { g: 2000, gl: 20 },
+      evals: { g: 4620, gl: 185 },
+      time: { g: 9.8967, gl: 4.8967 },
+      phases: { g: [1.00, 6.93, 0.01, 1.40], gl: [1.01, 1.90, 0, 1.39] }
+    },
+    epinions: {
+      name: "Epinions",
+      U: "18.059",
+      E: "354.897",
+      used: 5,
+      alloc: { 9: 1, 38: 1, 39: 11, 58: 1, 83: 6 },
+      points: { g: 2000, gl: 20 },
+      evals: { g: 4315, gl: 179 },
+      time: { g: 58.00, gl: 29.10 },
+      phases: { g: [6.94, 42.23, 0.01, 7.85], gl: [6.81, 13.74, 0, 7.57] }
+    }
+  };
+
+  var PHASE_NAMES = {
+    g: ["solo", "đường cong", "DP", "realise"],
+    gl: ["solo", "đường cong + DP", "realise"]
+  };
+
+  var raceDs = "digg";
+  var raceAnim = null;
+  var progress = { g: 1, gl: 1 };
+  var colorCache = null;
+
+  var el = {
+    raceMeta: document.getElementById("raceMeta"),
+    runBtn: document.getElementById("runBtn"),
+    ticker: document.getElementById("ticker"),
+    tickerText: document.getElementById("tickerText"),
+    clock: document.getElementById("clock"),
+    noteG: document.querySelector("[data-note-g]"),
+    noteGl: document.querySelector("[data-note-gl]"),
+    tip: document.getElementById("tip")
+  };
+
+  var laneEl = {
+    g: document.querySelector('.lane[data-method="g"]'),
+    gl: document.querySelector('.lane[data-method="gl"]')
+  };
+
+  var canvasEl = {
+    g: document.getElementById("gridG"),
+    gl: document.getElementById("gridGL")
+  };
+
+  function fmtInt(n) {
+    return Math.round(n).toLocaleString("vi-VN");
+  }
+
+  function fmtTime(n) {
+    return n.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " s";
+  }
+
+  function fmtTimeShort(n) {
+    return n.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /* ---------------------------------------------------------------
+     Grid drawing
+     --------------------------------------------------------------- */
+  var COLS = 100;
+  var ROWS = 20;
+
+  function glCells(ds) {
+    var alloc = RACE[ds].alloc;
+    var keys = Object.keys(alloc).map(Number).sort(function (a, b) { return a - b; });
+    var max = 0;
+    keys.forEach(function (c) { if (alloc[c] > max) max = alloc[c]; });
+    var cells = [];
+    for (var r = 0; r < max; r++) {
+      keys.forEach(function (c) {
+        if (r < alloc[c]) cells.push({ col: c, row: r });
+      });
+    }
+    return cells;
+  }
+
+  var glOrder = { digg: glCells("digg"), epinions: glCells("epinions") };
+
+  function readColors() {
+    var cs = getComputedStyle(root);
+    colorCache = {
+      g: cs.getPropertyValue("--g").trim(),
+      gl: cs.getPropertyValue("--gl").trim(),
+      ghost: cs.getPropertyValue("--grid-ghost").trim()
+    };
+  }
+
+  function cellRect(ctx, col, row, cw, ch, gap) {
+    var x = col * cw + gap;
+    var y = row * ch + gap;
+    var w = Math.max(0.5, cw - gap * 2);
+    var h = Math.max(0.5, ch - gap * 2);
+    ctx.fillRect(x, y, w, h);
+  }
+
+  function drawGrid(method, p) {
+    var canvas = canvasEl[method];
+    if (!canvas) return;
+    var rect = canvas.getBoundingClientRect();
+    if (rect.width < 2 || rect.height < 2) return;
+
+    var dpr = window.devicePixelRatio || 1;
+    var w = Math.round(rect.width);
+    var h = Math.round(rect.height);
+    var pw = Math.round(w * dpr);
+    var ph = Math.round(h * dpr);
+    if (canvas.width !== pw || canvas.height !== ph) {
+      canvas.width = pw;
+      canvas.height = ph;
+    }
+
+    var ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+
+    if (!colorCache) readColors();
+    var cw = w / COLS;
+    var ch = h / ROWS;
+    var gap = Math.max(0.45, Math.min(cw, ch) * 0.17);
+
+    ctx.fillStyle = colorCache.ghost;
+    for (var c = 0; c < COLS; c++) {
+      for (var r = 0; r < ROWS; r++) cellRect(ctx, c, r, cw, ch, gap);
+    }
+
+    var color = method === "g" ? colorCache.g : colorCache.gl;
+    var count;
+    var last = null;
+
+    ctx.fillStyle = color;
+    if (method === "g") {
+      count = Math.round(p * RACE[raceDs].points.g);
+      for (var i = 0; i < count; i++) {
+        var cc = Math.floor(i / ROWS);
+        var rr = i % ROWS;
+        cellRect(ctx, cc, rr, cw, ch, gap);
+        last = { col: cc, row: rr };
+      }
+    } else {
+      count = Math.round(p * RACE[raceDs].points.gl);
+      var cells = glOrder[raceDs];
+      for (var j = 0; j < count; j++) {
+        var cell = cells[j];
+        cellRect(ctx, cell.col, cell.row, cw, ch, gap);
+        last = cell;
+      }
+    }
+
+    if (last && count > 0 && count < (method === "g" ? RACE[raceDs].points.g : RACE[raceDs].points.gl)) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(
+        last.col * cw + gap - 0.7,
+        last.row * ch + gap - 0.7,
+        Math.max(1, cw - gap * 2 + 1.4),
+        Math.max(1, ch - gap * 2 + 1.4)
+      );
+    }
+  }
+
+  function drawAll() {
+    drawGrid("g", progress.g);
+    drawGrid("gl", progress.gl);
+  }
+
+  function refreshCanvasColors() {
+    readColors();
+    drawAll();
+  }
+
+  /* ---------------------------------------------------------------
+     Race UI
+     --------------------------------------------------------------- */
+  function laneEls(method) {
+    var lane = laneEl[method];
+    return {
+      elapsed: lane.querySelector("[data-elapsed]"),
+      points: lane.querySelector("[data-points]"),
+      evals: lane.querySelector("[data-evals]"),
+      total: lane.querySelector("[data-total]"),
+      fill: lane.querySelector("[data-fill]"),
+      phase: lane.querySelector("[data-phase]"),
+      flag: lane.querySelector("[data-flag]")
+    };
+  }
+
+  var laneUI = { g: laneEls("g"), gl: laneEls("gl") };
+
+  function phaseText(method, elapsed) {
+    var d = RACE[raceDs];
+    var phases = d.phases[method];
+    var names = PHASE_NAMES[method];
+    var cum = 0;
+    for (var i = 0; i < phases.length; i++) {
+      cum += phases[i];
+      if (elapsed <= cum + 1e-9) return "đang " + names[i];
+    }
+    return "xong";
+  }
+
+  function setLane(method, elapsed, pointCount, evalCount, p) {
+    var ui = laneUI[method];
+    var d = RACE[raceDs];
+    if (ui.elapsed) ui.elapsed.textContent = fmtTimeShort(elapsed);
+    if (ui.points) ui.points.textContent = fmtInt(pointCount);
+    if (ui.evals) ui.evals.textContent = fmtInt(evalCount);
+    if (ui.total) ui.total.textContent = fmtTime(elapsed);
+    if (ui.fill) ui.fill.style.width = Math.max(0, Math.min(100, p * 100)) + "%";
+    if (ui.phase) ui.phase.textContent = p >= 1 ? "xong" : phaseText(method, elapsed);
+    if (ui.flag) ui.flag.hidden = !(p >= 1);
+  }
+
+  function setFinalUI() {
+    var d = RACE[raceDs];
+    progress = { g: 1, gl: 1 };
+    setLane("g", d.time.g, d.points.g, d.evals.g, 1);
+    setLane("gl", d.time.gl, d.points.gl, d.evals.gl, 1);
+    if (el.tickerText) el.tickerText.textContent = "Kết quả cuối · " + d.name;
+    if (el.clock) el.clock.textContent = fmtTime(d.time.g);
+    if (el.ticker) el.ticker.classList.remove("is-running");
+    if (el.runBtn) { el.runBtn.disabled = false; el.runBtn.textContent = "Chạy lại mô phỏng"; }
+    drawAll();
+  }
+
+  function setRunningUI() {
+    var d = RACE[raceDs];
+    progress = { g: 0, gl: 0 };
+    setLane("g", 0, 0, 0, 0);
+    setLane("gl", 0, 0, 0, 0);
+    if (el.tickerText) el.tickerText.textContent = "Đang chạy · " + d.name;
+    if (el.clock) el.clock.textContent = fmtTime(0);
+    if (el.ticker) el.ticker.classList.add("is-running");
+    if (el.runBtn) { el.runBtn.disabled = true; el.runBtn.textContent = "Đang chạy…"; }
+    drawAll();
+  }
+
+  function updateDataset() {
+    var d = RACE[raceDs];
+    if (el.raceMeta) {
+      el.raceMeta.textContent = d.U + " nút · " + d.E + " cạnh · " + d.used + "/100 cộng đồng được dùng";
+    }
+    if (el.noteG) el.noteG.textContent = "tổng " + fmtInt(d.points.g) + " điểm trên 100 cộng đồng";
+    if (el.noteGl) el.noteGl.textContent = "tổng " + fmtInt(d.points.gl) + " điểm, ở " + d.used + "/100 cộng đồng";
+    var canvasG = canvasEl.g;
+    var canvasGl = canvasEl.gl;
+    if (canvasG) canvasG.setAttribute("aria-label", "Lưới 100 cộng đồng nhân 20 điểm. CTIM-G dựng toàn bộ " + fmtInt(d.points.g) + " điểm.");
+    if (canvasGl) canvasGl.setAttribute("aria-label", "Lưới 100 cộng đồng nhân 20 điểm. CTIM-GL chỉ dựng " + fmtInt(d.points.gl) + " điểm ở " + d.used + " cộng đồng.");
+    setFinalUI();
+  }
+
+  function stopAnim() {
+    if (raceAnim !== null) {
+      cancelAnimationFrame(raceAnim);
+      raceAnim = null;
+    }
+  }
+
+  function runRace() {
+    stopAnim();
+    if (reduced) { setFinalUI(); return; }
+
+    var d = RACE[raceDs];
+    var ratio = d.time.g / d.time.gl;
+    var duration = 4200;
+    var start = null;
+    var glWasDone = false;
+
+    setRunningUI();
+
+    function frame(ts) {
+      if (start === null) start = ts;
+      var p = Math.min(1, (ts - start) / duration);
+      var pg = p;
+      var pgl = Math.min(1, p * ratio);
+      progress.g = pg;
+      progress.gl = pgl;
+
+      var eg = pg * d.time.g;
+      var egl = pgl * d.time.gl;
+      setLane("g", eg, pg * d.points.g, pg * d.evals.g, pg);
+      setLane("gl", egl, pgl * d.points.gl, pgl * d.evals.gl, pgl);
+
+      if (el.clock) el.clock.textContent = fmtTime(eg);
+
+      if (!glWasDone && pgl >= 1) {
+        glWasDone = true;
+      }
+      if (glWasDone && p < 1 && el.tickerText) {
+        el.tickerText.textContent = "CTIM-GL về đích · CTIM-G còn " + fmtTime((1 - pg) * d.time.g);
+      }
+
+      drawAll();
+
+      if (p < 1) {
+        raceAnim = requestAnimationFrame(frame);
+      } else {
+        raceAnim = null;
+        setFinalUI();
+      }
+    }
+
+    raceAnim = requestAnimationFrame(frame);
+  }
+
+  if (el.runBtn) el.runBtn.addEventListener("click", runRace);
+
+  document.querySelectorAll(".seg__btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var ds = btn.getAttribute("data-ds");
+      if (!ds || !RACE[ds] || ds === raceDs) return;
+      stopAnim();
+      raceDs = ds;
+      document.querySelectorAll(".seg__btn").forEach(function (b) {
+        var active = b === btn;
+        b.classList.toggle("is-active", active);
+        b.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      updateDataset();
+    });
+  });
+
+  /* Canvas resizing */
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function () { drawAll(); });
+    if (canvasEl.g) ro.observe(canvasEl.g);
+    if (canvasEl.gl) ro.observe(canvasEl.gl);
+  } else {
+    window.addEventListener("resize", drawAll);
+  }
+
+  /* ---------------------------------------------------------------
+     Chart tooltips
+     --------------------------------------------------------------- */
+  if (el.tip) {
+    var moveTip = function (e) {
+      var x = e.clientX + 14;
+      var y = e.clientY - 12;
+      var maxX = window.innerWidth - el.tip.offsetWidth - 10;
+      var maxY = window.innerHeight - el.tip.offsetHeight - 10;
+      if (x > maxX) x = Math.max(10, e.clientX - el.tip.offsetWidth - 14);
+      if (y > maxY) y = maxY;
+      if (y < 10) y = 10;
+      el.tip.style.left = x + "px";
+      el.tip.style.top = y + "px";
+    };
+
+    document.querySelectorAll("[data-tip]").forEach(function (node) {
+      var show = function (e) {
+        el.tip.textContent = node.getAttribute("data-tip");
+        el.tip.hidden = false;
+        moveTip(e);
+      };
+      var hide = function () { el.tip.hidden = true; };
+      node.addEventListener("mouseenter", show);
+      node.addEventListener("mousemove", moveTip);
+      node.addEventListener("mouseleave", hide);
+      node.addEventListener("focus", function () {
+        el.tip.textContent = node.getAttribute("data-tip");
+        el.tip.hidden = false;
+        var r = node.getBoundingClientRect();
+        el.tip.style.left = Math.max(10, r.left) + "px";
+        el.tip.style.top = Math.max(10, r.top - 34) + "px";
+      });
+      node.addEventListener("blur", hide);
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Allocation demo: DP table vs heap
+     --------------------------------------------------------------- */
+  var ALLOC = {
+    counts: [3, 2, 1],
+    steps: [
+      { m: 0, gain: 15, next: 11 },
+      { m: 0, gain: 11, next: 8 },
+      { m: 1, gain: 9, next: 6 },
+      { m: 0, gain: 8, next: 5 },
+      { m: 2, gain: 7, next: 5 },
+      { m: 1, gain: 6, next: 4 }
+    ],
+    total: 56
+  };
+
+  var allocDemo = document.getElementById("allocDemo");
+  var allocRun = document.getElementById("allocRun");
+  var allocSteps = document.getElementById("allocSteps");
+  var allocSummary = document.querySelector("[data-alloc-summary]");
+  var allocTotal = document.querySelector("[data-alloc-total]");
+  var allocBadge = document.querySelector("[data-alloc-badge]");
+  var allocTimer = null;
+  var allocComms = allocDemo ? Array.from(allocDemo.querySelectorAll(".comm")) : [];
+
+  function paintAlloc(counts, activeIndex, reveal) {
+    var bars = allocComms.map(function (comm) {
+      return Array.from(comm.querySelectorAll(".bar"));
+    });
+    bars.forEach(function (list, ci) {
+      var n = counts[ci] || 0;
+      list.forEach(function (bar, bi) {
+        bar.classList.toggle("is-done", bi < n);
+        bar.classList.toggle("is-next", bi === n && bi < list.length);
+      });
+    });
+    allocComms.forEach(function (comm, ci) {
+      comm.classList.toggle("is-active", ci === activeIndex);
+      var c = comm.querySelector("[data-count]");
+      if (c) c.textContent = (counts[ci] || 0) + " hạt";
+    });
+    if (reveal !== undefined && allocSteps) {
+      Array.from(allocSteps.children).forEach(function (li, i) {
+        li.hidden = i >= reveal;
+      });
+    }
+  }
+
+  function setAllocFinal() {
+    if (allocTimer) { clearTimeout(allocTimer); allocTimer = null; }
+    if (!allocDemo) return;
+    paintAlloc(ALLOC.counts, -1, ALLOC.steps.length);
+    if (allocSummary) allocSummary.textContent = "A:" + ALLOC.counts[0] + " · B:" + ALLOC.counts[1] + " · C:" + ALLOC.counts[2];
+    if (allocTotal) allocTotal.textContent = "tổng " + ALLOC.total;
+    if (allocBadge) allocBadge.hidden = false;
+    if (allocRun) { allocRun.disabled = false; allocRun.textContent = "Chạy từng bước"; }
+  }
+
+  function startAlloc() {
+    if (!allocDemo || !allocRun || !allocSteps) return;
+    if (allocTimer) { clearTimeout(allocTimer); allocTimer = null; }
+    if (reduced) { setAllocFinal(); return; }
+
+    allocRun.disabled = true;
+    allocRun.textContent = "Đang chạy…";
+    if (allocBadge) allocBadge.hidden = true;
+
+    var counts = [0, 0, 0];
+    var total = 0;
+    var i = 0;
+    paintAlloc(counts, -1, 0);
+    if (allocSummary) allocSummary.textContent = "A:0 · B:0 · C:0";
+    if (allocTotal) allocTotal.textContent = "tổng 0";
+
+    function step() {
+      if (i >= ALLOC.steps.length) { setAllocFinal(); return; }
+      var s = ALLOC.steps[i];
+      counts[s.m] += 1;
+      total += s.gain;
+      paintAlloc(counts, s.m, i + 1);
+      var li = allocSteps.children[i];
+      if (li) {
+        li.hidden = false;
+        li.classList.add("is-new");
+        setTimeout(function () { li.classList.remove("is-new"); }, 420);
+      }
+      if (allocSummary) allocSummary.textContent = "A:" + counts[0] + " · B:" + counts[1] + " · C:" + counts[2];
+      if (allocTotal) allocTotal.textContent = "tổng " + total;
+      i += 1;
+      allocTimer = setTimeout(step, 560);
+    }
+
+    allocTimer = setTimeout(step, 240);
+  }
+
+  if (allocRun) allocRun.addEventListener("click", startAlloc);
+  setAllocFinal();
+
+  /* ---------------------------------------------------------------
+     Copy the report rewrite
+     --------------------------------------------------------------- */
+  var copyBtn = document.getElementById("copyRewrite");
+  var rewrite = document.getElementById("rewriteText");
+  if (copyBtn && rewrite) {
+    copyBtn.addEventListener("click", function () {
+      var text = rewrite.innerText.replace(/\n{3,}/g, "\n\n").trim();
+      var reset = function () { copyBtn.textContent = "Sao chép đoạn viết lại"; };
+      var ok = function () {
+        copyBtn.textContent = "Đã sao chép";
+        setTimeout(reset, 2200);
+      };
+      var fallback = function () {
+        var range = document.createRange();
+        range.selectNodeContents(rewrite);
+        var sel = window.getSelection();
+        if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+        copyBtn.textContent = "Đã chọn · bấm Ctrl+C";
+        setTimeout(reset, 2600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, fallback);
+      } else {
+        fallback();
+      }
+    });
+  }
+
+  /* ---------------------------------------------------------------
+     Boot
+     --------------------------------------------------------------- */
+  applyTheme(currentTheme());
+  updateDataset();
+})();
+</script>
