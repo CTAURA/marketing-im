@@ -8,14 +8,22 @@ Log ghi ra thư mục gốc repo, tên `<dataset>_lazy_h01_K<K>.log`
 
 ## 0. Chuẩn bị (máy mới)
 
-`data/` không nằm trong git — copy sang máy kia:
+Năm dataset (kèm model cache `.pkl`) nằm sẵn trong git ở `data/zips/`.
+Sau `git pull`, giải nén tại thư mục gốc repo — các file tự vào `data/processed/`:
+
+```bash
+# Bash
+for f in digg ciao delicious epinions lastfm; do unzip -o data/zips/$f.zip; done
+```
+
+```powershell
+# PowerShell
+foreach ($f in 'digg','ciao','delicious','epinions','lastfm') { Expand-Archive "data/zips/$f.zip" -DestinationPath . -Force }
+```
+
+Yelp KHÔNG có trong zip — phải tự copy sang máy kia:
 
 ```
-data/processed/digg/        data/processed/_calib_model.pkl
-data/processed/ciao/        data/processed/_ciao.pkl
-data/processed/delicious/   data/processed/_delicious.pkl
-data/processed/epinions/    data/processed/_epinions.pkl
-data/processed/lastfm/      data/processed/_lastfm.pkl
 data/processed/yelp/        data/processed/_yelp_model.pkl
 ```
 
