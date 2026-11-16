@@ -1,0 +1,1341 @@
+<title>CTIM vs CTIM-G vs CTIM-GL</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+  /* Three-method comparison sheet: CTIM (neutral baseline), CTIM-G (amber),
+     CTIM-GL (teal). The thesis is "three methods, two seed sets". */
+
+  :root {
+    --bg: #f4f7f3;
+    --surface: #fbfcf9;
+    --surface-2: #e9efe8;
+    --ink: #16211c;
+    --ink-2: #33443b;
+    --muted: #5d6d64;
+    --rule: #cbd7ce;
+    --rule-soft: #dde5de;
+    --ctim: #3f4a44;
+    --g: #b45309;
+    --gl: #078a7a;
+    --g-fill: #8a3e07;
+    --gl-fill: #056b5f;
+    --on-series: #ffffff;
+    --grid-line: rgba(22, 33, 28, 0.06);
+    --shadow: 0 1px 0 rgba(22, 33, 28, 0.04), 0 18px 44px -32px rgba(22, 33, 28, 0.42);
+    --font-display: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
+    --max: 1160px;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1512;
+      --surface: #151d19;
+      --surface-2: #1b2621;
+      --ink: #e8efe9;
+      --ink-2: #c5d2c9;
+      --muted: #9aafa3;
+      --rule: #2b3a31;
+      --rule-soft: #223028;
+      --ctim: #b9c6bd;
+      --g: #c97f1c;
+      --gl: #18a090;
+      --g-fill: #c97f1c;
+      --gl-fill: #18a090;
+      --on-series: #0b1210;
+      --grid-line: rgba(232, 239, 233, 0.06);
+      --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 18px 44px -30px rgba(0, 0, 0, 0.9);
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0f1512;
+    --surface: #151d19;
+    --surface-2: #1b2621;
+    --ink: #e8efe9;
+    --ink-2: #c5d2c9;
+    --muted: #9aafa3;
+    --rule: #2b3a31;
+    --rule-soft: #223028;
+    --ctim: #b9c6bd;
+    --g: #c97f1c;
+    --gl: #18a090;
+    --g-fill: #c97f1c;
+    --gl-fill: #18a090;
+    --on-series: #0b1210;
+    --grid-line: rgba(232, 239, 233, 0.06);
+    --shadow: 0 1px 0 rgba(0, 0, 0, 0.2), 0 18px 44px -30px rgba(0, 0, 0, 0.9);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 0.96rem + 0.2vw, 1.08rem);
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { color: var(--ink); text-decoration-color: var(--gl); }
+  :focus-visible { outline: 2px solid var(--gl); outline-offset: 3px; }
+
+  .wrap {
+    width: 100%;
+    max-width: var(--max);
+    margin-inline: auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .topbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: var(--bg);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .topbar__inner {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: 58px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    flex: 0 0 auto;
+  }
+
+  .brand__mark {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 28px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  .brand__text {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin-left: auto;
+  }
+
+  .nav a {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--muted);
+  }
+  .nav a:hover { color: var(--ink); }
+
+  .hero {
+    position: relative;
+    border-bottom: 1px solid var(--rule);
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 32px 32px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+    mask-image: linear-gradient(to bottom, #000 0%, transparent 92%);
+  }
+
+  .hero__inner {
+    position: relative;
+    padding-top: clamp(54px, 8vw, 104px);
+    padding-bottom: clamp(40px, 6vw, 68px);
+  }
+
+  .eyebrow {
+    margin: 0 0 16px;
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .hero h1 {
+    max-width: 18ch;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.55rem, 6vw, 5.1rem);
+    font-weight: 800;
+    line-height: 0.99;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+  .hero h1 .hl { color: var(--gl); }
+
+  .lede {
+    max-width: 64ch;
+    margin: 24px 0 0;
+    font-size: clamp(1.03rem, 0.99rem + 0.25vw, 1.16rem);
+    line-height: 1.62;
+    color: var(--ink-2);
+  }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: clamp(30px, 4.5vw, 48px);
+    border-top: 1px solid var(--rule);
+  }
+
+  .fact { padding: 16px 24px 0 0; min-width: 0; }
+  .fact + .fact { padding-left: 24px; border-left: 1px solid var(--rule); }
+
+  .fact__value {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: clamp(1.3rem, 2.2vw, 1.85rem);
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .fact__label {
+    display: block;
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    line-height: 1.5;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    margin-top: 24px;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+
+  .mark {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    flex: 0 0 auto;
+  }
+  .mark--ctim { background: var(--ctim); border-radius: 1px; }
+  .mark--g { background: var(--g); border-radius: 50%; }
+  .mark--gl { background: var(--gl); transform: rotate(45deg); border-radius: 1px; }
+
+  .section {
+    border-top: 1px solid var(--rule);
+    padding-block: clamp(46px, 6.5vw, 86px);
+    scroll-margin-top: calc(58px + env(safe-area-inset-top, 0px) + 16px);
+  }
+
+  .section-head {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 12px 44px;
+    margin-bottom: clamp(26px, 4vw, 42px);
+  }
+  .section-head > .eyebrow { margin: 4px 0 0; }
+  .section-head__body { min-width: 0; }
+
+  .section h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.2vw, 2.55rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .sub {
+    max-width: 66ch;
+    margin: 12px 0 0;
+    color: var(--ink-2);
+    font-size: 1rem;
+  }
+
+  .subhead {
+    margin: 30px 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .subhead small {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .prose p { max-width: 66ch; margin: 0 0 12px; }
+  .prose p:last-child { margin-bottom: 0; }
+
+  .note {
+    max-width: 74ch;
+    margin: 18px 0 0;
+    padding: 13px 15px;
+    border-left: 2px solid var(--rule);
+    background: var(--surface-2);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .note strong { color: var(--ink); }
+
+  .callout {
+    max-width: 76ch;
+    margin: 24px 0 0;
+    padding: 13px 15px;
+    border-left: 2px solid var(--gl);
+    background: var(--surface-2);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .callout strong { color: var(--ink); }
+  .callout--warn { border-left-color: var(--g); }
+
+  /* ---------------- tables ---------------- */
+
+  .table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid var(--rule);
+    margin-top: 10px;
+  }
+
+  .data-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .data-table th {
+    padding: 10px 11px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 0.57rem;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+  .data-table th:first-child { text-align: left; }
+  .data-table th .th-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.51rem;
+    letter-spacing: 0.03em;
+    text-transform: none;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .data-table td {
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 0.75rem;
+    line-height: 1.45;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .data-table td:first-child {
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 0.91rem;
+    font-weight: 600;
+  }
+  .data-table tbody tr:hover { background: var(--surface-2); }
+  .data-table tbody tr.is-noise td { color: var(--muted); }
+  .data-table .pos { color: var(--ink); }
+  .data-table .neg { color: var(--ink); }
+
+  .table-note {
+    max-width: 84ch;
+    margin: 10px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .table-note strong { color: var(--ink-2); font-weight: 500; }
+
+  .pill {
+    display: inline-block;
+    padding: 1px 6px 2px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-size: 0.56rem;
+    letter-spacing: 0.03em;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .pill--warn { border-color: var(--g); }
+  .pill--good { border-color: var(--gl); }
+
+  /* ---------------- two rulers ---------------- */
+
+  .rulers { margin: 0; }
+
+  .rulers__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .rulers__head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 700;
+  }
+  .rulers__head p {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+
+  .rulers__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 40px;
+  }
+
+  .ruler { min-width: 0; }
+
+  .ruler__title {
+    margin: 0 0 7px;
+    font-family: var(--font-mono);
+    font-size: 0.59rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .ruler__scale {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr) 68px;
+    gap: 10px;
+    margin-bottom: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.53rem;
+    color: var(--muted);
+  }
+  .ruler__scale > div { display: flex; justify-content: space-between; }
+
+  .ruler-row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr) 68px;
+    gap: 10px;
+    align-items: center;
+    padding: 3px 0;
+  }
+
+  .ruler-row__label {
+    font-family: var(--font-body);
+    font-size: 0.83rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .ruler-row__track {
+    position: relative;
+    height: 18px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+
+  .ruler-row__zero {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    border-left: 1px dashed var(--muted);
+    opacity: 0.55;
+  }
+
+  .ruler-row__bar {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    border-radius: 2px;
+    background: var(--ink-2);
+  }
+
+  .ruler-row__value {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------------- dot plot ---------------- */
+
+  .dotplot-wrap {
+    overflow-x: auto;
+    margin-top: 8px;
+    padding-bottom: 2px;
+  }
+
+  .dotplot { min-width: 760px; }
+  .dotplot svg { display: block; width: 100%; height: auto; }
+
+  .dotplot .grid { stroke: var(--rule-soft); stroke-width: 1; }
+  .dotplot .axis { stroke: var(--rule); stroke-width: 1; }
+  .dotplot .connect { stroke: var(--rule); stroke-width: 1.5; }
+  .dotplot .row-label {
+    fill: var(--ink);
+    font-family: var(--font-body);
+    font-size: 13px;
+  }
+  .dotplot .tick-label {
+    fill: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .dotplot .band { fill: var(--surface-2); }
+  .dotplot .band-label {
+    fill: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+  .dotplot .marker--ctim { fill: var(--ctim); }
+  .dotplot .marker--g { fill: var(--g); }
+  .dotplot .marker--gl { fill: var(--gl); }
+
+  .dotplot-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+  .dotplot-legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .dotplot-hint {
+    display: none;
+    margin: 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--muted);
+  }
+
+  /* ---------------- overlap ---------------- */
+
+  .overlap { margin: 0; }
+
+  .overlap__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .overlap__head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 700;
+  }
+  .overlap__head p {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+  }
+
+  .overlap-row {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr) 118px;
+    gap: 10px;
+    align-items: center;
+    padding: 5px 0;
+  }
+
+  .overlap-row__label {
+    font-family: var(--font-body);
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .overlap-row__track {
+    position: relative;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    border-right: 1px dashed var(--muted);
+    overflow: hidden;
+  }
+
+  .overlap-row__bar {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    border-radius: 0 3px 3px 0;
+    background: var(--gl);
+  }
+
+  .overlap-row__value {
+    font-family: var(--font-mono);
+    font-size: 0.63rem;
+    text-align: right;
+    white-space: nowrap;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------------- methods / scorecard ---------------- */
+
+  .methods {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .method {
+    padding: 15px 17px 17px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+  }
+
+  .method__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 7px;
+  }
+  .method__head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .method__tag {
+    margin-left: auto;
+    padding: 1px 6px 2px;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.52rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .method p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.58;
+    color: var(--ink-2);
+  }
+
+  .scorecard td:last-child {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    white-space: normal;
+    min-width: 190px;
+    text-align: left;
+    color: var(--ink-2);
+  }
+  .scorecard td:first-child { white-space: nowrap; }
+
+  .footer {
+    border-top: 1px solid var(--rule);
+    padding-block: 24px 30px;
+  }
+  .footer p {
+    margin: 0 0 4px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .footer__brand {
+    margin-bottom: 5px !important;
+    font-size: 0.62rem !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink) !important;
+  }
+
+  @media (max-width: 900px) {
+    .section-head { grid-template-columns: 1fr; gap: 6px; }
+    .section-head > .eyebrow { margin: 0 0 6px; }
+    .rulers__grid { grid-template-columns: 1fr; }
+    .methods { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 760px) {
+    .nav { display: none; }
+    .brand__text { display: none; }
+    .facts { grid-template-columns: 1fr; }
+    .fact { padding: 13px 0 0; }
+    .fact + .fact { padding-left: 0; border-left: 0; border-top: 1px solid var(--rule-soft); margin-top: 13px; }
+    .rulers__grid { gap: 24px; }
+  }
+
+  @media (max-width: 460px) {
+    .hero h1 { font-size: clamp(2.3rem, 11vw, 3.2rem); }
+    .ruler-row, .ruler__scale { grid-template-columns: 66px minmax(0, 1fr) 60px; gap: 8px; }
+    .ruler-row__label { font-size: 0.78rem; }
+    .ruler-row__value { font-size: 0.6rem; }
+    .overlap-row { grid-template-columns: 70px minmax(0, 1fr) 104px; gap: 8px; }
+    .overlap-row__label { font-size: 0.8rem; }
+    .overlap-row__value { font-size: 0.58rem; }
+    .data-table { min-width: 580px; }
+    .dotplot { min-width: 720px; }
+    .dotplot-hint { display: block; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+
+<header class="topbar">
+  <div class="wrap topbar__inner">
+    <a class="brand" href="#top" aria-label="Về đầu trang">
+      <span class="brand__mark" aria-hidden="true">C/G/GL</span>
+      <span class="brand__text">so sánh ba phương thức</span>
+    </a>
+    <nav class="nav" aria-label="Mục lục">
+      <a href="#ket-qua">Kết quả</a>
+      <a href="#thoi-gian">Thời gian</a>
+      <a href="#tap-hat">Tập hạt</a>
+      <a href="#ket-luan">Kết luận</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap hero__inner">
+      <p class="eyebrow">5 tập dữ liệu · 15 sản phẩm · K = 20 · h = 0,1 · C = 100</p>
+      <h1>Ba phương thức. <span class="hl">Hai tập hạt giống.</span></h1>
+      <p class="lede">
+        CTIM nhanh nhất. CTIM-G bỏ điểm mù cộng đồng nhưng chậm. CTIM-GL giữ nguyên kết quả của
+        CTIM-G và nhanh hơn G 1,49–2,02× trên ba tập lớn. Trên 5 tập, ba phương thức chỉ tạo ra hai
+        tập hạt khác nhau: CTIM, và tập chung của CTIM-G với CTIM-GL.
+      </p>
+      <div class="facts">
+        <div class="fact">
+          <span class="fact__value">2,32 s</span>
+          <span class="fact__label">CTIM trên Digg, nhanh nhất</span>
+        </div>
+        <div class="fact">
+          <span class="fact__value">2,02×</span>
+          <span class="fact__label">CTIM-GL nhanh hơn CTIM-G trên Digg</span>
+        </div>
+        <div class="fact">
+          <span class="fact__value">15/15</span>
+          <span class="fact__label">CTIM-GL trùng tập với CTIM-G</span>
+        </div>
+      </div>
+      <div class="legend" aria-label="Chú giải phương thức">
+        <span><i class="mark mark--ctim" aria-hidden="true"></i>CTIM · đường cong trong cộng đồng</span>
+        <span><i class="mark mark--g" aria-hidden="true"></i>CTIM-G · MIA toàn cục, đủ đường cong</span>
+        <span><i class="mark mark--gl" aria-hidden="true"></i>CTIM-GL · MIA toàn cục, đường cong lười</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="ket-qua">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Kết quả</p>
+        <div class="section-head__body">
+          <h2>MIA đổi chiều. MC-IC không xác nhận.</h2>
+          <p class="sub">
+            Trên MIA, CTIM-G/GL hơn ở Digg và Epinions, kém ở Ciao và Last.fm. Trên MC-IC, không
+            có tập nào CTIM-G/GL hơn có ý nghĩa; Digg còn kém có ý nghĩa. CTIM-GL lặp lại y nguyên
+            kết quả của CTIM-G.
+          </p>
+        </div>
+      </div>
+
+      <figure class="rulers" aria-labelledby="rulersTitle">
+        <div class="rulers__head">
+          <h3 id="rulersTitle">Thay đổi so với CTIM</h3>
+          <p>Dương = CTIM-G/CTIM-GL cao hơn CTIM · thang chung ±8%</p>
+        </div>
+
+        <div class="rulers__grid">
+          <div class="ruler">
+            <p class="ruler__title">MIA · Eq (18) tại h = 0,1</p>
+            <div class="ruler__scale">
+              <span></span>
+              <div><span>−8%</span><span>0</span><span>+8%</span></div>
+              <span></span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Digg</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:50%;width:2.04%"></span></div>
+              <span class="ruler-row__value">+0,33%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Epinions</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:50%;width:42.39%"></span></div>
+              <span class="ruler-row__value">+6,78%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Ciao</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:38.51%;width:11.49%"></span></div>
+              <span class="ruler-row__value">−1,84%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Last.fm</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:36.51%;width:13.49%"></span></div>
+              <span class="ruler-row__value">−2,16%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Delicious</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:50%;width:0"></span></div>
+              <span class="ruler-row__value">0,00%</span>
+            </div>
+          </div>
+
+          <div class="ruler">
+            <p class="ruler__title">MC-IC · 1.000 lần mô phỏng</p>
+            <div class="ruler__scale">
+              <span></span>
+              <div><span>−8%</span><span>0</span><span>+8%</span></div>
+              <span></span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Digg</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:45.53%;width:4.47%"></span></div>
+              <span class="ruler-row__value">−0,72%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Epinions</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:50%;width:0.075%"></span></div>
+              <span class="ruler-row__value">+0,01%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Ciao</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:50%;width:0.001%"></span></div>
+              <span class="ruler-row__value">0,00%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Last.fm</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:50%;width:0.60%"></span></div>
+              <span class="ruler-row__value">+0,10%</span>
+            </div>
+            <div class="ruler-row">
+              <span class="ruler-row__label">Delicious</span>
+              <div class="ruler-row__track"><span class="ruler-row__zero"></span><span class="ruler-row__bar" style="left:50%;width:1.63%"></span></div>
+              <span class="ruler-row__value">+0,26%</span>
+            </div>
+          </div>
+        </div>
+      </figure>
+
+      <p class="table-note">
+        Cột MC gần như phẳng: thay đổi MIA không chuyển thành thay đổi MC-IC. Digg là ngoại lệ
+        duy nhất có độ lớn đáng kể, và nó ngược dấu MIA.
+      </p>
+
+      <h3 class="subhead">MIA · Eq (18) tại h = 0,1 <small>trung bình 3 sản phẩm mỗi tập</small></h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <caption class="sr-only">MIA của CTIM, CTIM-G và CTIM-GL trên năm tập dữ liệu.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tập</th>
+              <th scope="col">CTIM</th>
+              <th scope="col">CTIM-G</th>
+              <th scope="col">CTIM-GL</th>
+              <th scope="col">Δ G/GL so với CTIM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Digg</td><td>761,52</td><td>764,01</td><td>764,01</td><td>+0,33%</td></tr>
+            <tr><td>Epinions</td><td>1.442,52</td><td>1.540,37</td><td>1.540,37</td><td>+6,78%</td></tr>
+            <tr><td>Ciao</td><td>120,41</td><td>118,20</td><td>118,20</td><td>−1,84%</td></tr>
+            <tr><td>Last.fm</td><td>78,25</td><td>76,56</td><td>76,56</td><td>−2,16%</td></tr>
+            <tr><td>Delicious</td><td>23,03</td><td>23,03</td><td>23,03</td><td>0,00%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        CTIM-G và CTIM-GL giống nhau ở mọi ô; cột GL chỉ để đối chiếu. MIA là thước mà CTIM-G/GL
+        được thiết kế để tối ưu, nên chúng có lợi thế sẵn trên cột này.
+      </p>
+
+      <h3 class="subhead">MC-IC · 1.000 lần mô phỏng <small>trọng tài độc lập</small></h3>
+      <div class="table-wrap">
+        <table class="data-table">
+          <caption class="sr-only">MC-IC và z của CTIM, CTIM-G và CTIM-GL trên năm tập dữ liệu.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tập</th>
+              <th scope="col">CTIM</th>
+              <th scope="col">CTIM-G</th>
+              <th scope="col">CTIM-GL</th>
+              <th scope="col">Δ MC</th>
+              <th scope="col">z<span class="th-sub">G vs CTIM</span></th>
+              <th scope="col">Kết luận</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Digg</td><td>924,80</td><td>918,18</td><td>918,18</td><td>−0,72%</td><td>−4,72</td><td><span class="pill pill--warn">ĐẢO CHIỀU</span></td></tr>
+            <tr><td>Epinions</td><td>7.383,75</td><td>7.384,63</td><td>7.384,63</td><td>+0,01%</td><td>+0,36</td><td><span class="pill">MC không xác nhận</span></td></tr>
+            <tr><td>Ciao</td><td>843,79</td><td>843,79</td><td>843,79</td><td>0,00%</td><td>−0,03</td><td><span class="pill">MC không xác nhận</span></td></tr>
+            <tr><td>Last.fm</td><td>568,81</td><td>569,36</td><td>569,36</td><td>+0,10%</td><td>+0,46</td><td><span class="pill">MC không xác nhận</span></td></tr>
+            <tr><td>Delicious</td><td>125,79</td><td>126,12</td><td>126,12</td><td>+0,26%</td><td>+0,57</td><td><span class="pill pill--good">khớp · MIA hoà</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        <strong>Đảo chiều</strong> = MIA báo CTIM-G/GL hơn, MC-IC báo kém có ý nghĩa (|z| ≥ 2).
+        <strong>MC không xác nhận</strong> = MIA báo có chênh lệch nhưng MC-IC không phân biệt được
+        (|z| &lt; 2). Sai số chuẩn MC-IC của CTIM-G/GL: 1,03; 1,82; 0,73; 0,78; 0,51.
+      </p>
+
+      <div class="callout callout--warn">
+        <strong>Digg: MIA +0,33%, MC-IC −0,72% (z = −4,72).</strong> Đây là chênh lệch MC-IC duy
+        nhất có ý nghĩa trong cả 5 tập, và nó ngược dấu MIA. Dưới MC-IC, CTIM thắng trên Digg.
+      </div>
+
+      <div class="callout">
+        <strong>Epinions: MIA +6,78%, MC-IC +0,01% (z = +0,36).</strong> Khoảng cách MIA lớn nhất
+        của CTIM-G/GL không chuyển thành lợi thế trong mô phỏng độc lập. MC-IC không xác nhận.
+      </div>
+
+      <p class="table-note" style="margin-top:16px;">
+        <strong>Đọc thẳng:</strong> dưới MC-IC, CTIM-G/GL không hơn CTIM ở bất kỳ tập nào; trên
+        Digg còn kém có ý nghĩa. MIA hơn trên Epinions nhưng MC-IC không xác nhận. CTIM-GL không
+        thay đổi kết luận này: nó trả về đúng tập của CTIM-G.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="thoi-gian">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Thời gian</p>
+        <div class="section-head__body">
+          <h2>CTIM nhanh nhất. CTIM-GL ở giữa. CTIM-G chậm nhất.</h2>
+          <p class="sub">
+            Trên ba tập có thời gian đủ lớn, thứ tự là CTIM &lt; CTIM-GL &lt; CTIM-G. CTIM-GL nhanh
+            hơn CTIM-G 1,49–2,02×, nhưng vẫn chậm hơn CTIM 1,53–2,11×. Hai tập dưới 0,4 giây không
+            đủ độ phân giải để xếp hạng.
+          </p>
+        </div>
+      </div>
+
+      <h3 class="subhead">Thời gian chọn hạt giống <small>thang log · giây</small></h3>
+      <div class="dotplot-wrap">
+        <div class="dotplot" id="dotplot" role="img" aria-label="Biểu đồ chấm thời gian chọn hạt giống của CTIM, CTIM-G và CTIM-GL trên năm tập, thang log."></div>
+      </div>
+      <p class="dotplot-hint">Vuốt ngang để xem đủ trục thời gian.</p>
+      <div class="dotplot-legend">
+        <span><i class="mark mark--ctim" aria-hidden="true"></i>CTIM</span>
+        <span><i class="mark mark--g" aria-hidden="true"></i>CTIM-G</span>
+        <span><i class="mark mark--gl" aria-hidden="true"></i>CTIM-GL</span>
+      </div>
+      <p class="table-note">
+        Trục log vì thời gian trải từ 0,04 s đến 58 s. Vùng tô nhạt là các tập dưới 0,4 s, nơi
+        log ghi đến 0,01 s và thứ hạng không còn ý nghĩa.
+      </p>
+
+      <div class="table-wrap" style="margin-top:22px;">
+        <table class="data-table">
+          <caption class="sr-only">Thời gian chọn hạt giống của CTIM, CTIM-G và CTIM-GL trên năm tập dữ liệu.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tập</th>
+              <th scope="col">CTIM (s)</th>
+              <th scope="col">CTIM-G (s)</th>
+              <th scope="col">CTIM-GL (s)</th>
+              <th scope="col">G / CTIM</th>
+              <th scope="col">GL / CTIM</th>
+              <th scope="col">G / GL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Digg</td><td>2,32</td><td>9,90</td><td>4,90</td><td>4,27×</td><td>2,11×</td><td>2,02×</td></tr>
+            <tr><td>Epinions</td><td>18,97</td><td>58,00</td><td>29,10</td><td>3,06×</td><td>1,53×</td><td>1,99×</td></tr>
+            <tr><td>Ciao</td><td>1,10</td><td>2,51</td><td>1,68</td><td>2,27×</td><td>1,53×</td><td>1,49×</td></tr>
+            <tr class="is-noise"><td>Last.fm</td><td>0,39</td><td>0,37</td><td>0,33</td><td>0,93×</td><td>0,83×</td><td>1,12×</td></tr>
+            <tr class="is-noise"><td>Delicious</td><td>0,04</td><td>0,05</td><td>0,06</td><td>1,15×</td><td>1,39×</td><td>0,83×</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">
+        Thời gian chọn hạt giống, trung bình 3 sản phẩm. Thời gian CTIM đã trừ chi phí dựng lại
+        Eq (12) bên trong nó, nên ba cột so được trực tiếp. Hai dòng cuối dưới 0,4 giây; tỉ lệ của
+        chúng là nhiễu, không phải bằng chứng tăng tốc.
+      </p>
+
+      <div class="callout">
+        <strong>Digg: 2,32 → 4,90 → 9,90 s.</strong> CTIM-GL cắt 5,00 s so với CTIM-G, nhưng vẫn
+        chậm hơn CTIM 2,58 s.
+      </div>
+      <div class="callout">
+        <strong>Epinions: 18,97 → 29,10 → 58,00 s.</strong> CTIM-GL cắt 28,90 s so với CTIM-G,
+        nhưng vẫn chậm hơn CTIM 10,13 s.
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tap-hat">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Tập hạt</p>
+        <div class="section-head__body">
+          <h2>Ba phương thức, hai tập hạt.</h2>
+          <p class="sub">
+            CTIM-G và CTIM-GL trả về cùng một tập ở 15/15 sản phẩm. CTIM là tập còn lại; mức trùng
+            với G/GL thay đổi theo tập, từ 5/20 trên Delicious đến 18/20 trên Digg. Vì vậy ba
+            phương thức chỉ tạo ra hai tập hạt khác nhau.
+          </p>
+        </div>
+      </div>
+
+      <div class="facts" style="margin-top:0; margin-bottom:26px;">
+        <div class="fact">
+          <span class="fact__value">2</span>
+          <span class="fact__label">tập hạt giống khác nhau trong 3 phương thức</span>
+        </div>
+        <div class="fact">
+          <span class="fact__value">15/15</span>
+          <span class="fact__label">CTIM-G và CTIM-GL trùng tập</span>
+        </div>
+        <div class="fact">
+          <span class="fact__value">5–18 / 20</span>
+          <span class="fact__label">seed CTIM trùng với G/GL, tùy tập</span>
+        </div>
+      </div>
+
+      <figure class="overlap" aria-labelledby="overlapTitle">
+        <div class="overlap__head">
+          <h3 id="overlapTitle">Seed của CTIM trùng với CTIM-G/CTIM-GL</h3>
+          <p>20 seed mỗi tập · 100% = cùng tập</p>
+        </div>
+        <div class="overlap-row">
+          <span class="overlap-row__label">Digg</span>
+          <div class="overlap-row__track"><span class="overlap-row__bar" style="width:90%"></span></div>
+          <span class="overlap-row__value">18/20 · 90%</span>
+        </div>
+        <div class="overlap-row">
+          <span class="overlap-row__label">Epinions</span>
+          <div class="overlap-row__track"><span class="overlap-row__bar" style="width:55%"></span></div>
+          <span class="overlap-row__value">11/20 · 55%</span>
+        </div>
+        <div class="overlap-row">
+          <span class="overlap-row__label">Ciao</span>
+          <div class="overlap-row__track"><span class="overlap-row__bar" style="width:70%"></span></div>
+          <span class="overlap-row__value">14/20 · 70%</span>
+        </div>
+        <div class="overlap-row">
+          <span class="overlap-row__label">Last.fm</span>
+          <div class="overlap-row__track"><span class="overlap-row__bar" style="width:78.3%"></span></div>
+          <span class="overlap-row__value">15,7/20 · 78,3%</span>
+        </div>
+        <div class="overlap-row">
+          <span class="overlap-row__label">Delicious</span>
+          <div class="overlap-row__track"><span class="overlap-row__bar" style="width:25%"></span></div>
+          <span class="overlap-row__value">5/20 · 25%</span>
+        </div>
+      </figure>
+      <p class="table-note">
+        G vs GL: 20/20 · 100% ở cả 15 sản phẩm. Last.fm lấy trung bình 3 sản phẩm (15–16/20).
+        Trùng ít không có nghĩa là xấu: trên Delicious, cả ba cho cùng MIA/MC dù chỉ trùng 5/20.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="ket-luan">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Kết luận</p>
+        <div class="section-head__body">
+          <h2>Chọn theo mục tiêu, không theo nhãn.</h2>
+          <p class="sub">
+            CTIM-GL là bản tăng tốc của CTIM-G, không phải bản nâng cấp của CTIM. Nó đúng khi bạn
+            muốn đầu ra của CTIM-G mà không trả giá dựng đủ đường cong. Nó không giải quyết câu hỏi
+            chất lượng giữa CTIM và CTIM-G.
+          </p>
+        </div>
+      </div>
+
+      <div class="methods">
+        <article class="method">
+          <div class="method__head">
+            <span class="mark mark--ctim" aria-hidden="true"></span>
+            <h3>CTIM</h3>
+            <span class="method__tag">nhanh nhất</span>
+          </div>
+          <p>
+            Đo đường cong trong đồ thị con cảm sinh của từng cộng đồng, bỏ qua ảnh hưởng chéo.
+            Nhanh nhất trên cả ba tập lớn. Dùng khi tốc độ là ràng buộc chính và approximation
+            trong cộng đồng là chấp nhận được.
+          </p>
+        </article>
+        <article class="method">
+          <div class="method__head">
+            <span class="mark mark--g" aria-hidden="true"></span>
+            <h3>CTIM-G</h3>
+            <span class="method__tag">chậm nhất</span>
+          </div>
+          <p>
+            Đo trên MIA toàn cục, sửa điểm mù cross-community. MIA hơn trên Epinions nhưng MC-IC
+            không xác nhận; trên Digg MC-IC báo kém có ý nghĩa. Chậm nhất trên ba tập lớn.
+          </p>
+        </article>
+        <article class="method">
+          <div class="method__head">
+            <span class="mark mark--gl" aria-hidden="true"></span>
+            <h3>CTIM-GL</h3>
+            <span class="method__tag">cùng kết quả, nhanh hơn G</span>
+          </div>
+          <p>
+            Cùng tập với CTIM-G ở 15/15 sản phẩm; nhanh hơn G 1,49–2,02× trên ba tập lớn. Dùng khi
+            bạn muốn đúng đầu ra của CTIM-G mà không dựng đủ C×K điểm đường cong. Không phải bản
+            nâng cấp chất lượng so với CTIM.
+          </p>
+        </article>
+      </div>
+
+      <h3 class="subhead">Bảng đọc nhanh <small>theo từng tập</small></h3>
+      <div class="table-wrap">
+        <table class="data-table scorecard">
+          <caption class="sr-only">Bảng kết luận nhanh theo từng tập: MIA, MC-IC, thời gian và cách đọc.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tập</th>
+              <th scope="col">MIA</th>
+              <th scope="col">MC-IC</th>
+              <th scope="col">Thời gian</th>
+              <th scope="col">Đọc</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Digg</td><td>G/GL +0,33%</td><td>G/GL −0,72% · z=−4,72</td><td>CTIM</td><td>MC bác bỏ MIA; CTIM thắng dưới MC-IC.</td></tr>
+            <tr><td>Epinions</td><td>G/GL +6,78%</td><td>hoà · z=+0,36</td><td>CTIM</td><td>MIA hơn, MC-IC không xác nhận; CTIM nhanh hơn 1,53×.</td></tr>
+            <tr><td>Ciao</td><td>CTIM +1,84%</td><td>hoà · z=−0,03</td><td>CTIM</td><td>CTIM hơn theo MIA; MC-IC hoà.</td></tr>
+            <tr><td>Last.fm</td><td>CTIM +2,16%</td><td>hoà · z=+0,46</td><td>dưới 0,4 s</td><td>CTIM theo MIA; không xếp hạng tốc độ.</td></tr>
+            <tr><td>Delicious</td><td>hoà</td><td>hoà · z=+0,57</td><td>dưới 0,4 s</td><td>Hoà; không xếp hạng tốc độ.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <strong>Nếu bạn tin MIA:</strong> CTIM-G/GL thắng Epinions, hoà Delicious, thua Ciao và
+        Last.fm; Digg là đảo chiều. <strong>Nếu bạn tin MC-IC:</strong> không tập nào CTIM-G/GL hơn
+        có ý nghĩa; Digg chúng kém có ý nghĩa. <strong>Nếu bạn chỉ muốn đầu ra của CTIM-G nhanh
+        hơn:</strong> CTIM-GL là lựa chọn đúng. <strong>Nếu bạn muốn nhanh nhất:</strong> CTIM.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p class="footer__brand">CTIM / CTIM-G / CTIM-GL</p>
+    <p>Nguồn: 5 log <code>*_lazy_h01.log</code> · <code>results/lazy_curve_report.docx</code> · trang chi tiết <code>results/ctimg_vs_ctimgl.html</code></p>
+    <p>K = 20 · h = 0,1 · C = 100 · MC-IC 1.000 lần · 3 sản phẩm mỗi tập · 5 tập dữ liệu</p>
+    <p>15/15 là 5 tập × 3 sản phẩm, không phải 15 lần lặp độc lập. Yelp không có trong bộ log lười.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var DATA = [
+    { name: "Digg", ctim: 2.32, g: 9.8967, gl: 4.8967 },
+    { name: "Epinions", ctim: 18.9733, g: 58.0, gl: 29.1 },
+    { name: "Ciao", ctim: 1.1033, g: 2.5067, gl: 1.6833 },
+    { name: "Last.fm", ctim: 0.3933, g: 0.3667, gl: 0.3267 },
+    { name: "Delicious", ctim: 0.0433, g: 0.05, gl: 0.06 }
+  ];
+
+  var host = document.getElementById("dotplot");
+  if (!host) return;
+
+  var NS = "http://www.w3.org/2000/svg";
+  var W = 1080;
+  var H = 330;
+  var left = 122;
+  var right = 42;
+  var top = 44;
+  var bottom = 52;
+  var plotW = W - left - right;
+  var plotH = H - top - bottom;
+  var lo = Math.log10(0.03);
+  var hi = Math.log10(70);
+  var rowH = plotH / DATA.length;
+
+  function x(t) {
+    return left + (Math.log10(t) - lo) / (hi - lo) * plotW;
+  }
+  function y(i) {
+    return top + rowH * (i + 0.5);
+  }
+  function el(name, attrs) {
+    var node = document.createElementNS(NS, name);
+    attrs = attrs || {};
+    Object.keys(attrs).forEach(function (k) { node.setAttribute(k, attrs[k]); });
+    return node;
+  }
+  function text(x0, y0, content, cls, anchor) {
+    var node = el("text", { x: x0, y: y0, class: cls });
+    if (anchor) node.setAttribute("text-anchor", anchor);
+    node.textContent = content;
+    return node;
+  }
+  function fmt(t) {
+    return t.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  var svg = el("svg", {
+    viewBox: "0 0 " + W + " " + H,
+    role: "img",
+    "aria-label": "Thời gian chọn hạt giống theo thang log: CTIM, CTIM-G, CTIM-GL trên năm tập."
+  });
+
+  // noise band: below 0.4 s
+  var bandRight = x(0.4);
+  svg.appendChild(el("rect", {
+    x: left, y: top, width: Math.max(0, bandRight - left), height: plotH,
+    class: "band", opacity: "0.65"
+  }));
+  svg.appendChild(text(left + 6, top - 8, "dưới 0,4 s", "band-label"));
+
+  // grid + ticks
+  var ticks = [0.05, 0.1, 1, 10, 60];
+  ticks.forEach(function (t) {
+    var xx = x(t);
+    svg.appendChild(el("line", { x1: xx, y1: top, x2: xx, y2: top + plotH, class: "grid" }));
+    svg.appendChild(text(xx, top + plotH + 22, t === 0.05 ? "0,05" : t === 0.1 ? "0,1" : String(t), "tick-label", "middle"));
+  });
+
+  // axis
+  svg.appendChild(el("line", { x1: left, y1: top + plotH, x2: left + plotW, y2: top + plotH, class: "axis" }));
+  svg.appendChild(text(left + plotW / 2, H - 10, "thời gian chọn hạt giống (s, thang log)", "tick-label", "middle"));
+
+  // rows
+  DATA.forEach(function (d, i) {
+    var yy = y(i);
+    svg.appendChild(el("line", { x1: left, y1: yy, x2: left + plotW, y2: yy, class: "grid" }));
+    svg.appendChild(text(left - 12, yy + 4, d.name, "row-label", "end"));
+
+    var times = [d.ctim, d.g, d.gl];
+    var min = Math.min.apply(null, times);
+    var max = Math.max.apply(null, times);
+    svg.appendChild(el("line", { x1: x(min), y1: yy, x2: x(max), y2: yy, class: "connect" }));
+
+    var c = el("rect", { x: x(d.ctim) - 4, y: yy - 4, width: 8, height: 8, rx: 1, class: "marker marker--ctim" });
+    c.appendChild(el("title"));
+    c.lastChild.textContent = d.name + " · CTIM · " + fmt(d.ctim) + " s";
+    svg.appendChild(c);
+
+    var g = el("circle", { cx: x(d.g), cy: yy, r: 5, class: "marker marker--g" });
+    g.appendChild(el("title"));
+    g.lastChild.textContent = d.name + " · CTIM-G · " + fmt(d.g) + " s";
+    svg.appendChild(g);
+
+    var gl = el("path", {
+      d: "M " + x(d.gl) + " " + (yy - 6) +
+         " L " + (x(d.gl) + 6) + " " + yy +
+         " L " + x(d.gl) + " " + (yy + 6) +
+         " L " + (x(d.gl) - 6) + " " + yy + " Z",
+      class: "marker marker--gl"
+    });
+    gl.appendChild(el("title"));
+    gl.lastChild.textContent = d.name + " · CTIM-GL · " + fmt(d.gl) + " s";
+    svg.appendChild(gl);
+  });
+
+  host.appendChild(svg);
+})();
+</script>
