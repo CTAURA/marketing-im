@@ -1,6 +1,7 @@
-"""CTIM transcribed verbatim, and CTIM-G as a marked-up edit of it.
+"""CTIM transcribed verbatim, CTIM-G as a marked-up edit of it, and
+CTIM-GL as a further edit of CTIM-G.
 
-Two listings:
+Three listings:
 
   Algorithm 2  CTIM, transcribed from the printed figure exactly.  No symbol
                appears here that is not in the paper: G, U, E, D, pi, theta,
@@ -9,6 +10,10 @@ Two listings:
   Algorithm 3  CTIM-G, written as the SAME listing with every line that
                differs from CTIM set in red.  Lines 1-25 are byte-identical
                and stay black.
+  Algorithm 4  CTIM-GL, written as a further edit of CTIM-G: the full curve
+               build, the DP and the backtrack are replaced by lazy curves
+               and a community heap; the realisation and the fallback are
+               unchanged.
 
 One typesetting note.  Printed line 36 reads ``if I([C, k-1] + dI_m >= ...``
 with a stray opening parenthesis after ``I``.  Lines 35 and 36 otherwise agree
@@ -354,6 +359,91 @@ def ctimg_lines():
     return L
 
 
+# ---------------------------------------------------------------------------
+# Algorithm 4 -- CTIM-GL, the same listing with phases 1+2 made lazy
+# ---------------------------------------------------------------------------
+
+def ctimgl_lines():
+    """CTIM-GL: lazy curves + heap replace the full curves + DP + backtrack."""
+    L = ctim_lines()[:25]
+    a = lambda ind, body: L.append((ind, body, False))          # noqa: E731
+    r = lambda ind, body: L.append((ind, redden(body)           # noqa: E731
+                                    if body.startswith("<m:") else body, True))
+
+    def RM(*parts):
+        return redden(M(*parts))
+
+    # -- one heap key per community: the next curve point's marginal
+    r(0, kw("for ", True) + RM(mr("m = 1 … C")) + kw(" do", True))
+    r(1, RM(sub("a", "m") + mr(" = 0;   ") + sub("𝒮", "m") + mr(" = ∅;   ")
+            + mr("Δ") + sub("I", "m") + mr(" = ")
+            + MAX(_omml_cond(mr("u ∈ ") + sub("c", "m")),
+                  mr("I") + mdel(mr("{u}"))) + mr(";")))
+    r(1, RM(mr("H.push", plain=True) + mdel(mr("m") + mr(", ")
+            + mr("Δ") + sub("I", "m")) + mr(";")))
+    r(0, kw("end for", True))
+
+    # -- K steps: pop the best community, commit one point, push the next key
+    r(0, kw("for ", True) + RM(mr("k = 1 … K")) + kw(" do", True))
+    r(1, RM(mr("m*") + mr(" ← ") + mr("H.pop_max", plain=True) + mr("();")))
+    r(1, RM(mr("u ← ")
+            + ARGMAX(_omml_cond(mr("u ∈ ") + sub("c", "m*") + mr(" ∖ ")
+                                + sub("𝒮", "m*")),
+                     mdel(mr("I") + mdel(sub("𝒮", "m*") + mr(" ∪ u"))
+                          + mr(" − ") + mr("I") + mdel(sub("𝒮", "m*"))))
+            + mr(";")))
+    r(1, RM(sub("𝒮", "m*") + mr(" = ") + sub("𝒮", "m*") + mr(" ∪ u;   ")
+            + sub("a", "m*") + mr(" = ") + sub("a", "m*") + mr(" + 1;")))
+    r(1, kw("if ", True) + RM(sub("a", "m*") + mr(" < ")
+                              + MIN(mdel(mr("K, |") + sub("c", "m*") + mr("|"))))
+      + kw(" then", True))
+    r(2, RM(mr("Δ") + sub("I", "m*") + mr(" = ")
+            + MAX(_omml_cond(mr("u ∈ ") + sub("c", "m*") + mr(" ∖ ")
+                             + sub("𝒮", "m*")),
+                  mdel(mr("I") + mdel(sub("𝒮", "m*") + mr(" ∪ u"))
+                       + mr(" − ") + mr("I") + mdel(sub("𝒮", "m*"))))
+            + mr(";")))
+    r(2, RM(mr("H.push", plain=True) + mdel(mr("m*") + mr(", ")
+            + mr("Δ") + sub("I", "m*")) + mr(";")))
+    r(1, kw("end if", True))
+    r(0, kw("end for", True))
+
+    # -- the concatenated curve set and the allocation value
+    r(0, RM(sub("𝒮", "cat") + mr(" = ∅;")))
+    r(0, kw("for ", True) + RM(mr("m = 1 … C")) + kw(" do", True))
+    r(1, RM(sub("𝒮", "cat") + mr(" = ") + sub("𝒮", "cat") + mr(" ∪ ")
+            + msubsup(mr("𝒮"), mr("m"), mdel(sub("a", "m"))) + mr(";")))
+    r(0, kw("end for", True))
+    r(0, RM(mr("dp", plain=True) + mr(" = ")
+            + SUM("m", sub("I", "m") + mdel(sub("a", "m"))) + mr(";")))
+
+    # -- realisation: unchanged from CTIM-G
+    a(0, M(mr("𝒮 = ∅;")))
+    a(0, kw("while ") + M(mr("|𝒮| < ") + SUM("m", sub("a", "m"))) + kw(" do"))
+    a(1, M(sub("u", "k") + mr(" ← ")
+           + ARGMAX(_omml_cond(mr("u ∈ ")
+                               + mnary("⋃", mr("m : |𝒮 ∩ ") + sub("c", "m")
+                                       + mr("| < ") + sub("a", "m"), "",
+                                       sub("c", "m"))
+                               + mr(" ∖ 𝒮")),
+                    mdel(mr("I") + mdel(mr("𝒮 ∪ u")) + mr(" − ")
+                         + mr("I") + mdel(mr("𝒮")))) + mr(";"))
+      + tx("   ties broken by the smallest node index"))
+    a(1, kw("if ") + M(mr("I") + mdel(mr("𝒮 ∪ u")) + mr(" − ") + mr("I")
+                        + mdel(mr("𝒮")) + mr(" ≤ 0")) + kw(" and ")
+      + M(mr("𝒮 ≠ ∅")) + kw(" then break end if"))
+    a(1, M(mr("𝒮 = 𝒮 ∪ ") + sub("u", "k") + mr(";")))
+    a(0, kw("end while"))
+
+    # -- fallback unchanged; only the gap's dp expression changes
+    a(0, kw("if ") + M(mr("I") + mdel(sub("𝒮", "cat")) + mr(" > I")
+                       + mdel(mr("𝒮"))) + kw(" then ")
+      + M(mr("𝒮 = ") + sub("𝒮", "cat")) + kw(" end if"))
+    r(0, RM(mr("Γ = ") + mr("dp", plain=True) + mr(" − I")
+            + mdel(mr("𝒮")) + mr(";")))
+    return L
+
+
 def ctimg_io():
     return [
         ("Input:", run("Directed graph ", size=9)
@@ -370,20 +460,38 @@ def ctimg_io():
     ]
 
 
+def ctimgl_io():
+    return [
+        ("Input:", run("Directed graph ", size=9)
+         + M(mr("𝒢 = ") + mdel(mr("𝒰, ℰ")))
+         + run(", set of potential-influence logs ", size=9)
+         + M(mr("𝒟, π, θ, η"))
+         + run(", item-topic relevance ", size=9)
+         + M(mr("P") + mdel(mr("z | i")))
+         + run(", size of seed nodes ", size=9) + M(mr("K"))),
+        ("Output:", run("Seed nodes set ", size=9) + M(mr("𝒮"))
+         + run(", per-community allocation ", size=9) + M(mr("a"))
+         + run(", independence gap ", size=9) + M(mr("Γ"))
+         + run(".", size=9)),
+    ]
+
+
 # ---------------------------------------------------------------------------
 
 def build():
     b = []
     A = b.append
 
-    A(para(run("CTIM và CTIM-G: bản chép nguyên văn và bản sửa", bold=True),
-           style="Title", spacing_after=60))
+    A(para(run("CTIM, CTIM-G và CTIM-GL: bản chép nguyên văn và các bản sửa",
+               bold=True), style="Title", spacing_after=60))
     A(para(run("Thuật toán 2 là bản chép nguyên văn từ hình in của bài báo, "
                "không thêm một ký hiệu nào. Thuật toán 3 là chính bản đó, sửa "
                "lại thành CTIM-G, với mọi dòng khác biệt được ", italic=True,
                color="5A6673")
            + run("tô đỏ", italic=True, bold=True, color=RED)
-           + run(".", italic=True, color="5A6673")))
+           + run(". Thuật toán 4 là CTIM-GL: giữ nguyên giai đoạn realisation "
+                 "của Thuật toán 3, thay giai đoạn dựng đủ đường cong + DP bằng "
+                 "đường cong lười + heap.", italic=True, color="5A6673")))
 
     A(heading("Thuật toán 2 — CTIM, chép nguyên văn", 1))
     A(algo("Algorithm 2  Community-based influence maximization algorithm",
@@ -450,6 +558,37 @@ def build():
                  "và đo lợi ích đối với ") + M(mr("𝒮"))
            + run(" đầy đủ, nên phần ảnh hưởng chồng lấn giữa các cộng đồng chỉ "
                  "được tính một lần.")))
+
+    A(heading("Thuật toán 4 — CTIM-GL, sửa từ Thuật toán 3", 1))
+    A(algo("Algorithm 4  Community-based influence maximization with lazy "
+           "curves and a heap", ctimgl_io(), ctimgl_lines()))
+    A(caption("Dòng 1–25 giống Thuật toán 2/3. Dòng 26–43 thay giai đoạn dựng "
+              "đủ đường cong + DP + quay lui bằng heap lười: mỗi cộng đồng một "
+              "khoá, K lần pop/commit/push, dựng đúng K điểm. Dòng 44–50 là "
+              "realisation/fallback giống Thuật toán 3, chỉ đánh số lại. Dòng "
+              "51 giữ công thức Γ; dp giờ là Σ_m I_m(a_m)."))
+
+    A(heading("Bảng đối chiếu CTIM-G và CTIM-GL", 1))
+    A(table(["Thuật toán 3 (CTIM-G)", "Thuật toán 4 (CTIM-GL)", "Thay đổi"], [
+        ["1–25", "1–25", "không đổi — model + Eq (19)"],
+        ["26–48", "26–43", "BỎ dựng đủ C×K điểm + DP + quay lui; thay bằng "
+                           "heap lười: C khoá, K lần pop/commit/push, đúng K điểm"],
+        ["49–54", "44–49", "realisation giữ nguyên, đánh số lại"],
+        ["55", "50", "fallback giữ nguyên"],
+        ["56", "51", "Γ giữ nguyên công thức; dp = Σ_m I_m(a_m) thay vì I[C,K]"],
+    ], [1500, 1500, 6000], ["center", "center", "left"]))
+
+    A(heading("CTIM-GL khác CTIM-G ở đâu", 1))
+    A(para(run("1.  Giai đoạn 1. ", bold=True)
+           + run("Công thức đường cong không đổi, nhưng đường cong được dựng "
+                 "lười: chỉ dựng điểm khi heap cần, thay vì dựng đủ C×K điểm "
+                 "trước.")))
+    A(para(run("2.  Giai đoạn 2. ", bold=True)
+           + run("Bỏ bảng I[m,k], t[m,k] và vòng quay lui; thay bằng heap C "
+                 "khoá và K bước pop/commit/push.")))
+    A(para(run("3.  Giai đoạn 3 trở đi. ", bold=True)
+           + run("Realisation, fallback và Γ giữ nguyên; chỉ khác dp được tính "
+                 "bằng Σ_m I_m(a_m) thay vì I[C,K].")))
     return "".join(b)
 
 
@@ -459,10 +598,13 @@ def main(argv=None):
                    default=os.path.join("results", "algorithms_diff.docx"))
     args = p.parse_args(argv)
     write_docx(args.out, build())
-    c, g = ctim_lines(), ctimg_lines()
+    c, g, gl = ctim_lines(), ctimg_lines(), ctimgl_lines()
     assert len(c) == 45, "Algorithm 2 phai co dung 45 dong nhu hinh in, dang co %d" % len(c)
-    print("[write] %s   (CTIM %d lines, CTIM-G %d lines, %d marked changed)"
-          % (args.out, len(c), len(g), sum(1 for x in g if x[2])))
+    assert len(gl) == 51, "Algorithm 4 phai co dung 51 dong, dang co %d" % len(gl)
+    print("[write] %s   (CTIM %d lines, CTIM-G %d lines, CTIM-GL %d lines, "
+          "%d/%d marked changed)"
+          % (args.out, len(c), len(g), len(gl),
+             sum(1 for x in g if x[2]), sum(1 for x in gl if x[2])))
     return 0
 
 

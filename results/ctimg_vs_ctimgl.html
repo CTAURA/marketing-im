@@ -1296,6 +1296,25 @@
   .complexity-table td:nth-child(2),
   .complexity-table td:nth-child(3) { font-family: var(--font-mono); font-size: 0.72rem; }
 
+  .example { margin-top: 26px; }
+  .example__title {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .example__lead {
+    max-width: 76ch;
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    line-height: 1.62;
+    color: var(--ink-2);
+  }
+  .example__lead strong { color: var(--ink); }
+  .heap-table { min-width: 700px; }
+  .heap-table td:nth-child(3) { font-weight: 500; }
+
   /* ---------------- match / tables ---------------- */
 
   .match-panel {
@@ -1447,6 +1466,14 @@
     color: var(--muted);
   }
   .table-note strong { color: var(--ink-2); font-weight: 500; }
+
+  .table-hint {
+    display: none;
+    margin: 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    color: var(--muted);
+  }
 
   /* ---------------- speed chart ---------------- */
 
@@ -1883,6 +1910,7 @@
     .tooltip { display: none; }
     .stage__tag { margin-left: 0; }
     .map-table { min-width: 680px; }
+    .table-hint { display: block; }
   }
 
   @media (max-width: 460px) {
@@ -2357,12 +2385,79 @@ s = realise(alloc_from(heap))</code></pre>
 
       <div class="prose">
         <p>
-          Lặp <var>K</var> lần. Bất biến của vòng lặp là: sau <var>step</var> bước, đa tập các lợi ích
-          biên đã commit là <var>t</var> lợi ích biên lớn nhất có thể chọn trên hợp các đường cong,
-          tuân theo điều kiện tiền tố. Vì mỗi đường cong lõm, lợi ích biên không tăng, nên phần tử
-          vừa lấy ra luôn là phần tử lớn nhất còn lại. Kết quả của giai đoạn này là phân bổ
-          <var>a</var><sub><var>m</var></sub>: số điểm đường cong cấp cho từng cộng đồng. Phân bổ
-          này là quota cho giai đoạn realisation.
+          Lặp đúng <var>K</var> lần. Mỗi lần, heap cho biết cộng đồng nào đang có “điểm kế tiếp”
+          đáng nhất; ta lấy cộng đồng đó, cấp cho nó một điểm, rồi cập nhật lại điểm kế tiếp của
+          chính nó. Vì đường cong lõm, điểm sau không bao giờ đáng hơn điểm trước, nên điểm kế tiếp
+          của cộng đồng vừa lấy sẽ thấp hơn hoặc bằng điểm vừa lấy. Các cộng đồng khác giữ nguyên
+          điểm. Cứ như vậy, mỗi bước ta luôn chọn được điểm đáng nhất còn lại, mà không phải thử mọi
+          cách chia. Sau <var>K</var> bước, mỗi cộng đồng có một số điểm đã nhận; đó là phân bổ
+          <var>a</var><sub><var>m</var></sub>. Phân bổ này là giới hạn (quota) cho giai đoạn
+          realisation: cộng đồng nào được nhận bao nhiêu hạt. Ví dụ A/B/C bên dưới chạy đúng vòng
+          lặp này.
+        </p>
+      </div>
+
+      <div class="note">
+        <strong>“Độc lập” ở đây là độc lập do cách dựng, không phải do <var>I</var> tách được.</strong>
+        Đường cong <var>I</var><sub><var>m</var></sub>(<var>j</var>) chỉ nhận tiền tố
+        <var>s</var><sub><var>m</var></sub> của cộng đồng <var>m</var>, nên khoá của <var>m</var>
+        không đổi khi cộng đồng khác commit. Nhưng <var>I</var> là MIA toàn cục: nếu đặt tất cả seed
+        vào một <var>s</var> chung, lợi ích biên của các cộng đồng sẽ tương tác. Vì vậy phân bổ
+        <var>a</var><sub><var>m</var></sub> tối ưu cho
+        <span class="math">Σ<sub><var>m</var></sub> <var>I</var><sub><var>m</var></sub>(<var>a</var><sub><var>m</var></sub>)</span>,
+        không tối ưu trực tiếp cho
+        <span class="math"><var>I</var>(∪<sub><var>m</var></sub> <var>s</var><sub><var>m</var></sub>)</span>.
+        Pha realisation ở §4 mới đánh giá trên <var>s</var> chung;
+        <span class="math"><var>Γ</var> = <var>dp</var> − <var>I</var>(<var>s</var>)</span> đo mức
+        vi phạm tính độc lập.
+      </div>
+
+      <div class="example">
+        <h4 class="example__title">Ví dụ: K = 6, ba cộng đồng A, B, C</h4>
+        <p class="example__lead">
+          Mỗi cộng đồng có một dãy lợi ích biên giảm dần:
+          <strong>A = 15, 11, 8, 5</strong>; <strong>B = 9, 6, 4, 2</strong>;
+          <strong>C = 7, 5, 3, 1</strong>. Heap ban đầu giữ khoá của điểm kế tiếp:
+          A = 15, B = 9, C = 7. Mỗi bước pop cộng đồng có khoá lớn nhất, commit một điểm,
+          rồi cập nhật khoá của chính cộng đồng đó.
+        </p>
+
+        <div class="table-wrap">
+          <table class="data-table heap-table">
+            <caption class="sr-only">Sáu bước phân bổ ngân sách bằng heap cho ba cộng đồng A, B, C với K bằng 6.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Bước</th>
+                <th scope="col">Pop</th>
+                <th scope="col">Lợi ích</th>
+                <th scope="col">Khoá mới</th>
+                <th scope="col">Heap sau<span class="th-sub">A / B / C</span></th>
+                <th scope="col">Phân bổ<span class="th-sub">A / B / C</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>A</td><td>15</td><td>A = 11</td><td>11 / 9 / 7</td><td>1 / 0 / 0</td></tr>
+              <tr><td>2</td><td>A</td><td>11</td><td>A = 8</td><td>8 / 9 / 7</td><td>2 / 0 / 0</td></tr>
+              <tr><td>3</td><td>B</td><td>9</td><td>B = 6</td><td>8 / 6 / 7</td><td>2 / 1 / 0</td></tr>
+              <tr><td>4</td><td>A</td><td>8</td><td>A = 5</td><td>5 / 6 / 7</td><td>3 / 1 / 0</td></tr>
+              <tr><td>5</td><td>C</td><td>7</td><td>C = 5</td><td>5 / 6 / 5</td><td>3 / 1 / 1</td></tr>
+              <tr><td>6</td><td>B</td><td>6</td><td>B = 4</td><td>5 / 4 / 5</td><td>3 / 2 / 1</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-hint">Vuốt ngang bảng để xem Heap sau và Phân bổ.</p>
+        <p class="table-note">
+          Lợi ích = ΔI_m tại thời điểm pop. Khoá mới = ΔI_m của điểm kế tiếp sau commit. Heap sau
+          liệt kê khoá của A / B / C. Sau 6 bước: A = 3, B = 2, C = 1; tổng =
+          15 + 11 + 9 + 8 + 7 + 6 = 56. DP ở §8 cho cùng phân bổ.
+        </p>
+
+        <p class="example__lead" style="margin-top:12px;">
+          <strong>Vì sao nhìn heap là hiểu:</strong> mỗi khoá là “seed kế tiếp của cộng đồng này
+          đáng bao nhiêu”. Pop khoá lớn nhất là cấp seed cho cộng đồng đang đáng nhất. Sau commit,
+          khoá của cộng đồng đó giảm vì đường cong lõm; các khoá khác giữ nguyên. Đây là kiểu
+          “nước chảy vào chỗ trũng nhất” của phân bổ biên: luôn lấy phần tử lớn nhất còn lại, nên
+          không cần thử mọi cách chia như DP.
         </p>
       </div>
 
@@ -2373,14 +2468,22 @@ s = realise(alloc_from(heap))</code></pre>
         nó là dạng tham lam của DP trên các đường cong lõm, chứng minh ở §6.
       </div>
 
+      <div class="note">
+        <strong>Tóm lại: CTIM-GL đổi gì so với CTIM-G?</strong>
+        Giai đoạn 1 — công thức giữ nguyên, nhưng đường cong được dựng lười: chỉ dựng điểm khi heap
+        cần. Giai đoạn 2 — thay DP bằng heap. Giai đoạn 3 — realisation giữ nguyên, cùng quota,
+        cùng bước chọn giữa concat và realised, cùng cách tính <var>Γ</var>. Vì vậy: đổi công thức
+        ở giai đoạn 2; đổi lịch chạy ở giai đoạn 1; giai đoạn 3 trở đi giống y CTIM-G.
+      </div>
+
       <h3 class="subhead">4. Giai đoạn 3: realisation với quota <small>Eq (GL10)–(GL11) · giữ nguyên</small></h3>
       <div class="prose">
         <p>
           Các điểm commit ở §3 là điểm của đường cong, không phải tập hạt cuối. Ở §4,
           <var>s</var> không subscript là tập hạt cuối toàn cục. Đường cong được đo
           trên tiền tố riêng nên lạc quan: nó không thấy ảnh hưởng chéo giữa các cộng đồng. Vì vậy
-          CTIM-GL chạy thêm một pha realisation trên hợp các cộng đồng có phân bổ dương, dùng
-          <var>a</var><sub><var>m</var></sub> làm quota cứng cho từng cộng đồng. Cụ thể, khi chọn
+          CTIM-GL dùng lại pha realisation của CTIM-G: chạy trên hợp các cộng đồng có phân bổ
+          dương, dùng <var>a</var><sub><var>m</var></sub> làm quota cứng cho từng cộng đồng. Cụ thể, khi chọn
           <var>v</var> ∈ <var>c</var><sub><var>m</var></sub>, phải có
           |<var>s</var> ∩ <var>c</var><sub><var>m</var></sub>| &lt; <var>a</var><sub><var>m</var></sub>.
         </p>
@@ -2422,7 +2525,7 @@ s = realise(alloc_from(heap))</code></pre>
           của §3. Trong mã, gọi <var>s</var><sub>cat</sub> là tập nối từ các điểm curve và
           <var>s</var><sub>r</sub> là tập realisation; cả hai được chấm, tập có
           <var>I</var>(·) lớn hơn được trả về, và <code>realisation_fallback</code> ghi lại bên nào
-          thắng. Giá trị dự phòng từ đường cong là <var>dp</var> = Σ<sub><var>m</var></sub>
+          thắng. Cả CTIM-G và CTIM-GL dùng chung bước này. Giá trị dự phòng từ đường cong là <var>dp</var> = Σ<sub><var>m</var></sub>
           <var>I</var><sub><var>m</var></sub>(<var>a</var><sub><var>m</var></sub>); độ lệch
           <var>Γ</var> = <var>dp</var> − <var>I</var>(<var>s</var>) là independence gap, in trong
           <code>stats['independence_gap']</code>.
